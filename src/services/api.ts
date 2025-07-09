@@ -149,4 +149,15 @@ export const fetchBackendNationalities = async () => {
   return response.data;
 };
 
+// Backend Currency API
+export const fetchBackendCurrencies = async () => {
+  const token = localStorage.getItem('token');
+  const response = await apiClient.get('/api/currency', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
 export default apiClient; 

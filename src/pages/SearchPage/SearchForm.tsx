@@ -8,7 +8,7 @@ import { addDays } from '../../utils';
 import 'react-datepicker/dist/react-datepicker.css';
 // ICONS
 import { MapPin, Calendar, User, Plus, Banknote, Globe, Baby, Search, Bed } from 'lucide-react';
-import { fetchBackendNationalities, searchAPI } from '../../services/api';
+import { fetchBackendNationalities, fetchBackendCurrencies, searchAPI } from '../../services/api';
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
@@ -26,10 +26,29 @@ const SearchForm: React.FC = () => {
   const [defaultNationality, setDefaultNationality] = useState('');
 
   // Para birimi seçenekleri
-  const currencyOptions = CURRENCIES.map(currency => ({
-    value: currency.value,
-    label: currency.label,
-  }));
+  const [currencyOptions, setCurrencyOptions] = useState<{ value: string; label: string; symbol?: string }[]>([]);
+  useEffect(() => {
+    const getCurrencies = async () => {
+      try {
+        const data = await fetchBackendCurrencies();
+        const items = data?.body?.currencies || [];
+        setCurrencyOptions(
+          items.map((item: any) => ({
+            value: item.code || '',
+            label: item.name || item.code || '',
+            symbol: item.iconText || '',
+          }))
+        );
+      } catch (e) {
+        setCurrencyOptions([
+          { value: 'EUR', label: 'Euro (€)', symbol: '€' },
+          { value: 'USD', label: 'US Dollar ($)', symbol: '$' },
+          { value: 'TRY', label: 'Turkish Lira (₺)', symbol: '₺' },
+        ]);
+      }
+    };
+    getCurrencies();
+  }, []);
 
   // Ülke seçenekleri
   const [countryOptions, setCountryOptions] = useState<{ value: string; label: string }[]>([]);
@@ -376,6 +395,8 @@ const SearchForm: React.FC = () => {
               options={currencyOptions}
               className="react-select-container"
               classNamePrefix="react-select"
+              menuPortalTarget={typeof window !== 'undefined' ? window.document.body : undefined}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </div>
           <div>
@@ -389,6 +410,8 @@ const SearchForm: React.FC = () => {
               className="react-select-container"
               classNamePrefix="react-select"
               components={{ Option: CountryOption }}
+              menuPortalTarget={typeof window !== 'undefined' ? window.document.body : undefined}
+              styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             />
           </div>
         </div>
