@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import Select, { components } from 'react-select';
 import { SearchCriteria, Child } from '../../types';
-import { CURRENCIES, COUNTRIES } from '../../constants';
+import { CURRENCIES } from '../../constants';
 import { addDays } from '../../utils';
 import 'react-datepicker/dist/react-datepicker.css';
 // ICONS
 import { MapPin, Calendar, User, Plus, Banknote, Globe, Baby, Search, Bed } from 'lucide-react';
-import { searchAPI } from '../../services/api';
+import { fetchBackendNationalities, searchAPI } from '../../services/api';
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ const SearchForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<string[]>([]);
+  const [defaultNationality, setDefaultNationality] = useState('');
 
   // Para birimi seçenekleri
   const currencyOptions = CURRENCIES.map(currency => ({
@@ -31,10 +32,35 @@ const SearchForm: React.FC = () => {
   }));
 
   // Ülke seçenekleri
-  const countryOptions = COUNTRIES.map(country => ({
-    value: country.value,
-    label: country.label,
-  })).sort((a, b) => a.label.localeCompare(b.label));
+  const [countryOptions, setCountryOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    const getNationalities = async () => {
+      try {
+        const data = await fetchBackendNationalities();
+        const items = data?.body?.nationalities || [];
+        setCountryOptions(
+          items.map((item: any) => ({
+            value: item.id || '',
+            label: item.name || '',
+          }))
+        );
+        setDefaultNationality(data?.body?.default || '');
+      } catch (e) {
+        setDefaultNationality('');
+      }
+    };
+    getNationalities();
+  }, []);
+
+  useEffect(() => {
+    if (countryOptions.length === 0 || !defaultNationality) return;
+    if (formData.nationality === defaultNationality) return;
+    const defaultCountry = countryOptions.find(opt => opt.value === defaultNationality);
+    setFormData(prev => ({
+      ...prev,
+      nationality: defaultCountry ? defaultCountry.value : countryOptions[0].value
+    }));
+  }, [countryOptions, defaultNationality]);
 
   // 1. Yeni state: rooms
   const [rooms, setRooms] = useState([
@@ -355,8 +381,8 @@ const SearchForm: React.FC = () => {
               <Globe size={18} className="inline-block" /> Nationality
             </label>
             <Select
-              value={countryOptions.find(option => option.value === formData.nationality)}
-              onChange={(option) => handleInputChange('nationality', option?.value)}
+              value={countryOptions.find(option => option.value === formData.nationality) || null}
+              onChange={(option) => handleInputChange('nationality', option ? option.value : '')}
               options={countryOptions}
               className="react-select-container"
               classNamePrefix="react-select"

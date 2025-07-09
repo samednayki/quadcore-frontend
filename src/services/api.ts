@@ -138,4 +138,15 @@ export const authAPI = {
   },
 };
 
+// Backend Nationalities API
+export const fetchBackendNationalities = async () => {
+  const token = localStorage.getItem('token');
+  const response = await apiClient.get('/api/nationalities', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
 export default apiClient; 
