@@ -15,7 +15,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       setStoredValue(valueToStore);
       saveToLocalStorage(key, valueToStore);
     } catch (error) {
-      console.error(`Local storage'a kaydetme hatası (${key}):`, error);
+      console.error(`Error saving to local storage (${key}):`, error);
     }
   };
 
@@ -26,7 +26,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         try {
           setStoredValue(JSON.parse(e.newValue));
         } catch (error) {
-          console.error(`Local storage okuma hatası (${key}):`, error);
+          console.error(`Local storage read error (${key}):`, error);
         }
       }
     };

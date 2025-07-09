@@ -8,6 +8,7 @@ import { addDays } from '../../utils';
 import 'react-datepicker/dist/react-datepicker.css';
 // ICONS
 import { MapPin, Calendar, User, Plus, Banknote, Globe, Baby, Search, Bed } from 'lucide-react';
+import { searchAPI } from '../../services/api';
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
@@ -37,12 +38,12 @@ const SearchForm: React.FC = () => {
 
   // 1. Yeni state: rooms
   const [rooms, setRooms] = useState([
-    { adults: 2, children: 0, childrenAges: [] as (number|null)[] }
+    { adults: 1, children: 0, childrenAges: [] as (number|null)[] }
   ]);
 
   // 2. Oda ekleme/çıkarma fonksiyonları
   const addRoom = () => {
-    setRooms([...rooms, { adults: 2, children: 0, childrenAges: [] }]);
+    setRooms([...rooms, { adults: 1, children: 0, childrenAges: [] }]);
   };
   const removeRoom = (index: number) => {
     setRooms(rooms.filter((_, i) => i !== index));
@@ -154,6 +155,46 @@ const SearchForm: React.FC = () => {
     navigate(`/search?${params.toString()}`);
   };
 
+  // Autocomplete fonksiyonu
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  const handleSuggestionClick = (item: any) => {
+    handleInputChange('location', item.city?.name || item.hotel?.name || item.airport?.name || item.name);
+    setSuggestions([]);
+  };
+
+  // Benzersiz ve anlamlı öneri listesi oluştur
+  const uniqueSuggestions = Array.from(
+    new Map(
+      suggestions
+        .filter(item => item.city?.name || item.hotel?.name || item.airport?.name)
+        .map(item => [
+          (item.city?.name || item.hotel?.name || item.airport?.name)?.toLowerCase(),
+          item
+        ])
+    ).values()
+  );
+
+  const handleLocationChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleInputChange('location', value);
+    if (value.length >= 3) {
+      setIsLoadingSuggestions(true);
+      const productType = 2;
+      try {
+        const response = await searchAPI.getArrivalAutocomplete({ query: value, productType });
+        setSuggestions(response.body?.items || []);
+      } catch (err) {
+        setSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    } else {
+      setSuggestions([]);
+    }
+  };
+
   return (
     <div className="card p-6 shadow-medium">
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,10 +218,31 @@ const SearchForm: React.FC = () => {
           <input
             type="text"
             value={formData.location}
-            onChange={(e) => handleInputChange('location', e.target.value)}
+            onChange={handleLocationChange}
             placeholder="City, hotel or destination"
             className="input-field pl-10"
           />
+          {isLoadingSuggestions && (
+            <div className="absolute left-0 right-0 top-16 bg-white border rounded shadow p-2 text-sm text-gray-500 z-20">Loading...</div>
+          )}
+          {uniqueSuggestions.length > 0 && (
+            <ul className="absolute left-0 right-0 top-16 bg-white border rounded shadow z-20 max-h-60 overflow-y-auto">
+              {uniqueSuggestions.map((item, idx) => {
+                const displayName = item.city?.name || item.hotel?.name || item.airport?.name || item.name;
+                return (
+                  <li
+                    key={
+                      (item.city?.id || item.hotel?.id || item.airport?.id || item.id || displayName || "") + "-" + idx
+                    }
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSuggestionClick(item)}
+                  >
+                    {displayName}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         {/* Tarih seçimi */}

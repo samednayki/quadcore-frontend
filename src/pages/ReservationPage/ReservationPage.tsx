@@ -54,23 +54,23 @@ const ReservationPage: React.FC = () => {
     const newErrors: string[] = [];
 
     if (formData.guests.length === 0) {
-      newErrors.push('En az bir misafir bilgisi girilmelidir');
+      newErrors.push('At least one guest information is required');
     }
 
     formData.guests.forEach((guest, index) => {
       if (!guest.firstName.trim()) {
-        newErrors.push(`Misafir ${index + 1}: Ad zorunludur`);
+        newErrors.push(`Guest ${index + 1}: First name is required`);
       }
       if (!guest.lastName.trim()) {
-        newErrors.push(`Misafir ${index + 1}: Soyad zorunludur`);
+        newErrors.push(`Guest ${index + 1}: Last name is required`);
       }
       if (!guest.email.trim()) {
-        newErrors.push(`Misafir ${index + 1}: Email zorunludur`);
+        newErrors.push(`Guest ${index + 1}: Email is required`);
       } else if (!isValidEmail(guest.email)) {
-        newErrors.push(`Misafir ${index + 1}: Geçerli email adresi giriniz`);
+        newErrors.push(`Guest ${index + 1}: Please enter a valid email address`);
       }
       if (!guest.phone.trim()) {
-        newErrors.push(`Misafir ${index + 1}: Telefon zorunludur`);
+        newErrors.push(`Guest ${index + 1}: Phone is required`);
       }
     });
 
@@ -86,7 +86,7 @@ const ReservationPage: React.FC = () => {
 
   const handleSubmit = () => {
     // Rezervasyon işlemi
-    console.log('Rezervasyon tamamlanıyor:', formData);
+    console.log('Reservation is being completed:', formData);
     
     // Mock rezervasyon numarası
     const reservationNumber = 'RES' + Date.now().toString().slice(-8);
@@ -107,10 +107,10 @@ const ReservationPage: React.FC = () => {
         {/* Başlık */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Rezervasyon Tamamla
+            Complete Reservation
           </h1>
           <p className="text-gray-600">
-            Adım {step} / 2
+            Step {step} / 2
           </p>
         </div>
 
@@ -139,7 +139,7 @@ const ReservationPage: React.FC = () => {
             {step === 1 ? (
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                  Misafir Bilgileri
+                  Guest Information
                 </h2>
 
                 {/* Hata mesajları */}
@@ -159,7 +159,7 @@ const ReservationPage: React.FC = () => {
                     <div key={index} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-medium text-gray-900">
-                          Misafir {index + 1}
+                          Guest {index + 1}
                         </h3>
                         {formData.guests.length > 1 && (
                           <button
@@ -167,7 +167,7 @@ const ReservationPage: React.FC = () => {
                             onClick={() => removeGuest(index)}
                             className="text-red-600 hover:text-red-700 text-sm"
                           >
-                            Kaldır
+                            Remove
                           </button>
                         )}
                       </div>
@@ -175,7 +175,7 @@ const ReservationPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ad *
+                            First Name *
                           </label>
                           <input
                             type="text"
@@ -187,7 +187,7 @@ const ReservationPage: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Soyad *
+                            Last Name *
                           </label>
                           <input
                             type="text"
@@ -230,21 +230,21 @@ const ReservationPage: React.FC = () => {
                     onClick={addGuest}
                     className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-400 hover:text-primary-600 transition-colors"
                   >
-                    + Misafir Ekle
+                    + Add Guest
                   </button>
                 </div>
 
                 {/* Özel istekler */}
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Özel İstekler (Opsiyonel)
+                    Special Requests (Optional)
                   </label>
                   <textarea
                     value={formData.specialRequests}
                     onChange={(e) => setFormData(prev => ({ ...prev, specialRequests: e.target.value }))}
                     rows={3}
                     className="input-field"
-                    placeholder="Özel isteklerinizi buraya yazabilirsiniz..."
+                    placeholder="You can write your special requests here..."
                   />
                 </div>
 
@@ -253,28 +253,28 @@ const ReservationPage: React.FC = () => {
                     onClick={handleNext}
                     className="w-full btn-primary py-3"
                   >
-                    Devam Et
+                    Continue
                   </button>
                 </div>
               </div>
             ) : (
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                  Ödeme Bilgileri
+                  Payment Information
                 </h2>
 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ödeme Yöntemi
+                      Payment Method
                     </label>
                     <select
                       value={formData.paymentMethod}
                       onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
                       className="input-field"
                     >
-                      <option value="credit-card">Kredi Kartı</option>
-                      <option value="bank-transfer">Banka Havalesi</option>
+                          <option value="credit-card">Credit Card</option>
+                      <option value="bank-transfer">Bank Transfer</option>
                       <option value="paypal">PayPal</option>
                     </select>
                   </div>
@@ -282,7 +282,7 @@ const ReservationPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Kart Numarası
+                        Card Number
                       </label>
                       <input
                         type="text"
@@ -292,7 +292,7 @@ const ReservationPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Son Kullanma Tarihi
+                        Expiry Date
                       </label>
                       <input
                         type="text"
@@ -302,7 +302,7 @@ const ReservationPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CVV
+                        CVV Code
                       </label>
                       <input
                         type="text"
@@ -312,7 +312,7 @@ const ReservationPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Kart Sahibi
+                        Cardholder Name
                       </label>
                       <input
                         type="text"
@@ -328,13 +328,13 @@ const ReservationPage: React.FC = () => {
                     onClick={() => setStep(1)}
                     className="flex-1 btn-secondary"
                   >
-                    Geri
+                    Back
                   </button>
                   <button
                     onClick={handleSubmit}
                     className="flex-1 btn-primary"
                   >
-                    Rezervasyonu Tamamla
+                    Complete Reservation
                   </button>
                 </div>
               </div>
@@ -345,7 +345,7 @@ const ReservationPage: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="card p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Rezervasyon Özeti
+                Reservation Summary
               </h3>
 
               <div className="space-y-4">
@@ -356,22 +356,22 @@ const ReservationPage: React.FC = () => {
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-sm">
-                    <span>Giriş:</span>
+                    <span>Check-in:</span>
                     <span>{hotelInfo.checkIn.toLocaleDateString('tr-TR')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Çıkış:</span>
+                    <span>Check-out:</span>
                     <span>{hotelInfo.checkOut.toLocaleDateString('tr-TR')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Gece:</span>
+                    <span>Night:</span>
                     <span>{hotelInfo.nights}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between font-semibold">
-                    <span>Toplam:</span>
+                    <span>Total:</span>
                     <span className="text-lg text-primary-600">
                       {formatPrice(hotelInfo.totalPrice)}
                     </span>

@@ -31,20 +31,20 @@ const RoomList: React.FC<RoomListProps> = ({ rooms }) => {
                   </h3>
                   <p className="text-gray-600 mb-2">{room.type}</p>
                   <p className="text-sm text-gray-500">
-                    Maksimum {room.capacity} kişi
+                    Maximum {room.capacity} people
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-bold text-primary-600">
                     {formatPrice(room.price)}
                   </div>
-                  <p className="text-sm text-gray-500">gecelik</p>
+                  <p className="text-sm text-gray-500">per night</p>
                 </div>
               </div>
 
               {/* Oda özellikleri */}
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Oda Özellikleri</h4>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Room Features</h4>
                 <div className="flex flex-wrap gap-2">
                   {room.amenities.map((amenity) => {
                     const amenityInfo = AMENITIES.find(a => a.value === amenity);
@@ -63,10 +63,10 @@ const RoomList: React.FC<RoomListProps> = ({ rooms }) => {
               {/* Butonlar */}
               <div className="flex space-x-3">
                 <button className="btn-primary flex-1">
-                  Bu Odayı Seç
+                  Select this room
                 </button>
                 <button className="btn-secondary">
-                  Detayları Gör
+                  View details
                 </button>
               </div>
             </div>

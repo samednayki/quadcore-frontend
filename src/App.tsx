@@ -8,8 +8,29 @@ import ReservationPage from './pages/ReservationPage/ReservationPage';
 import HelpCenterPage from './pages/HelpCenterPage';
 import ContactPage from './pages/ContactPage';
 import FAQPage from './pages/FAQPage';
+import { authAPI } from './services/api';
 
 function App() {
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Anonim kullanıcı bilgileri
+      const loginRequest = {
+        user: 'Internship',
+        password: '@San2025',
+        agency: 'Internship',
+      };
+      authAPI.login(loginRequest)
+        .then((token) => {
+          console.log('Login request successful, token:', token);
+          localStorage.setItem('token', token);
+        })
+        .catch((err) => {
+          console.error('Anonymous login failed:', err);
+        });
+    }
+  }, []);
+
   return (
     <div className="App">
       <Layout>

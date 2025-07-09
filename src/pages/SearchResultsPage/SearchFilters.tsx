@@ -23,18 +23,18 @@ const SearchFilters: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Filtreler</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
         <button
           onClick={clearFilters}
           className="text-sm text-primary-600 hover:text-primary-700"
         >
-          Temizle
+          Clear
         </button>
       </div>
 
       {/* Fiyat Aralığı */}
       <div>
-        <h4 className="font-medium text-gray-900 mb-3">Fiyat Aralığı</h4>
+        <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
         <div className="space-y-2">
           {PRICE_RANGES.map((range) => (
             <label key={range.value} className="flex items-center">
@@ -54,7 +54,7 @@ const SearchFilters: React.FC = () => {
 
       {/* Yıldız Derecelendirmesi */}
       <div>
-        <h4 className="font-medium text-gray-900 mb-3">Yıldız Derecelendirmesi</h4>
+        <h4 className="font-medium text-gray-900 mb-3">Rating</h4>
         <div className="space-y-2">
           {RATINGS.map((rating) => (
             <label key={rating.value} className="flex items-center">
@@ -74,7 +74,7 @@ const SearchFilters: React.FC = () => {
 
       {/* Özellikler */}
       <div>
-        <h4 className="font-medium text-gray-900 mb-3">Özellikler</h4>
+        <h4 className="font-medium text-gray-900 mb-3">Features</h4>
         <div className="space-y-2">
           {AMENITIES.map((amenity) => (
             <label key={amenity.value} className="flex items-center">
@@ -92,7 +92,7 @@ const SearchFilters: React.FC = () => {
 
       {/* Uygula Butonu */}
       <button className="w-full btn-primary">
-        Filtreleri Uygula
+        Apply Filters
       </button>
     </div>
   );

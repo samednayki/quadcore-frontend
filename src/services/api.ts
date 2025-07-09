@@ -3,7 +3,7 @@ import { SearchCriteria, SearchResult, Hotel, Reservation, Guest } from '../type
 import { API_ENDPOINTS } from '../constants';
 
 // API base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 // Axios instance
 const apiClient = axios.create({
@@ -55,6 +55,16 @@ export const searchAPI = {
   getLocationSuggestions: async (query: string): Promise<string[]> => {
     const response = await apiClient.get(`${API_ENDPOINTS.LOCATIONS}/suggestions`, {
       params: { q: query }
+    });
+    return response.data;
+  },
+
+  // Lokasyon/şehir autocomplete
+  getArrivalAutocomplete: async ({ query, productType = 0, culture = 'tr-TR' }: { query: string; productType?: number; culture?: string }) => {
+    const response = await apiClient.post('/search/autocomplete', {
+      query,
+      productType,
+      culture,
     });
     return response.data;
   },
@@ -110,6 +120,21 @@ export const reservationAPI = {
   // Rezervasyon iptal et
   cancelReservation: async (id: string): Promise<void> => {
     await apiClient.delete(`${API_ENDPOINTS.RESERVATIONS}/${id}`);
+  },
+};
+
+// Auth API
+type LoginRequest = {
+  user: string;
+  password: string;
+  agency: string;
+};
+
+export const authAPI = {
+  login: async (loginRequest: LoginRequest): Promise<string> => {
+    const response = await apiClient.post('/auth/login', loginRequest);
+    // Token string dönüyor
+    return response.data;
   },
 };
 

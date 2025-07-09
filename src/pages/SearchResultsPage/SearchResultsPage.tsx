@@ -31,11 +31,11 @@ const SearchResultsPage: React.FC = () => {
       setHotels([
         {
           id: '1',
-          name: 'Grand Hotel İstanbul',
-          location: 'İstanbul, Türkiye',
+          name: 'Grand Hotel Istanbul',
+          location: 'Istanbul, Turkey',
           rating: 4.5,
           imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400',
-          description: 'Boğaz manzaralı lüks otel',
+          description: 'Grand Hotel Istanbul is a luxury hotel located in the heart of Istanbul. It offers a breathtaking view of the Bosphorus. The hotel is located in the heart of Istanbul, near the historical peninsula. It is a perfect choice for business trips and holidays.',
           amenities: ['wifi', 'pool', 'spa', 'restaurant'],
           price: { amount: 1200, currency: 'TRY' },
           availableRooms: []
@@ -43,10 +43,10 @@ const SearchResultsPage: React.FC = () => {
         {
           id: '2',
           name: 'Antalya Resort & Spa',
-          location: 'Antalya, Türkiye',
+          location: 'Antalya, Turkey',
           rating: 4.8,
           imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400',
-          description: 'Deniz manzaralı resort otel',
+          description: 'Antalya Resort & Spa is a luxury hotel located in the heart of Antalya. It offers a breathtaking view of the Mediterranean Sea. The hotel is located in the heart of Antalya, near the historical peninsula. It is a perfect choice for business trips and holidays.',
           amenities: ['wifi', 'pool', 'gym', 'spa'],
           price: { amount: 1800, currency: 'TRY' },
           availableRooms: []
@@ -54,10 +54,10 @@ const SearchResultsPage: React.FC = () => {
         {
           id: '3',
           name: 'Cappadocia Cave Hotel',
-          location: 'Nevşehir, Türkiye',
+          location: 'Nevşehir, Turkey',
           rating: 4.6,
           imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400',
-          description: 'Eşsiz mağara oteli deneyimi',
+          description: 'Cappadocia Cave Hotel is a luxury hotel located in the heart of Cappadocia. It offers a breathtaking view of the Cappadocia Valley. The hotel is located in the heart of Cappadocia, near the historical peninsula. It is a perfect choice for business trips and holidays.',
           amenities: ['wifi', 'restaurant', 'concierge'],
           price: { amount: 950, currency: 'TRY' },
           availableRooms: []
@@ -73,7 +73,7 @@ const SearchResultsPage: React.FC = () => {
         <div className="flex items-center justify-center min-h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Otel aranıyor...</p>
+            <p className="text-gray-600">Hotel is searching...</p>
           </div>
         </div>
       </div>
@@ -103,11 +103,11 @@ const SearchResultsPage: React.FC = () => {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🏨</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Sonuç bulunamadı
+                No result found
               </h3>
               <p className="text-gray-600">
-                Arama kriterlerinize uygun otel bulunamadı. 
-                Lütfen farklı tarihler veya lokasyon deneyin.
+                No hotel found for your search criteria.
+                Please try different dates or location.
               </p>
             </div>
           )}

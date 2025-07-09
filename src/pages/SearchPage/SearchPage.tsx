@@ -1,6 +1,7 @@
 import React from 'react';
 import SearchForm from './SearchForm';
 import PopularDestinations from './PopularDestinations';
+import AnimatedIntro from './AnimatedIntro';
 
 const SearchPage: React.FC = () => {
   return (
@@ -11,8 +12,12 @@ const SearchPage: React.FC = () => {
           "url('https://images.pexels.com/photos/50594/sea-bay-waterfront-beach-50594.jpeg')"
       }}
     >
+      {/* Animasyonlu intro */}
+      <div className="w-full max-w-4xl mt-32">
+        <AnimatedIntro />
+      </div>
       {/* Glassmorphism Arama Kutusu */}
-      <div className="w-full max-w-4xl mt-32 mb-12">
+      <div className="w-full max-w-4xl mb-12">
         <div className="backdrop-blur-md bg-white/60 rounded-2xl shadow-2xl p-8">
           <SearchForm />
         </div>

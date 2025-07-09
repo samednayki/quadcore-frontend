@@ -38,7 +38,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
               <div className="text-2xl font-bold text-primary-600">
                 {formatPrice(hotel.price)}
               </div>
-              <p className="text-sm text-gray-500">gecelik</p>
+              <p className="text-sm text-gray-500">per night</p>
             </div>
           </div>
 
@@ -47,7 +47,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
 
           {/* Özellikler */}
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">Özellikler</h4>
+            <h4 className="text-sm font-medium text-gray-900 mb-2">Features</h4>
             <div className="flex flex-wrap gap-2">
               {hotel.amenities.slice(0, 4).map((amenity) => {
                 const amenityInfo = AMENITIES.find(a => a.value === amenity);
@@ -62,7 +62,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
               })}
               {hotel.amenities.length > 4 && (
                 <span className="text-xs text-gray-500">
-                  +{hotel.amenities.length - 4} daha
+                  +{hotel.amenities.length - 4} more
                 </span>
               )}
             </div>
@@ -74,10 +74,10 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
               to={`/hotel/${hotel.id}`}
               className="btn-primary flex-1 text-center"
             >
-              Detayları Gör
+              View details
             </Link>
             <button className="btn-secondary">
-              Favorilere Ekle
+              Add to favorites
             </button>
           </div>
         </div>
