@@ -12,19 +12,17 @@ const SearchPage: React.FC = () => {
           "url('https://images.pexels.com/photos/50594/sea-bay-waterfront-beach-50594.jpeg')"
       }}
     >
-      {/* Animasyonlu intro */}
-      <div className="w-full max-w-4xl mt-32">
+      {/* Hero overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent z-0"></div>
+      {/* Hero Content */}
+      <div className="relative z-10 flex flex-col items-center w-full max-w-4xl mt-40 mb-16">
         <AnimatedIntro />
-      </div>
-      {/* Glassmorphism Arama Kutusu */}
-      <div className="w-full max-w-4xl mb-12">
-        <div className="backdrop-blur-md bg-white/60 rounded-2xl shadow-2xl p-8">
+        <div className="w-full mt-8 shadow-2xl rounded-2xl backdrop-blur-md bg-white/70">
           <SearchForm />
         </div>
       </div>
-
       {/* Popüler Destinasyonlar ve diğer içerikler */}
-      <div className="w-full bg-white/80 py-16">
+      <div className="w-full bg-white/80 py-16 relative z-10">
         <div className="container-custom">
           <PopularDestinations />
         </div>

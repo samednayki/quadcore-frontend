@@ -14,11 +14,12 @@ const PopularDestinations: React.FC = () => {
           <Link
             key={city.value}
             to={`/search?location=${encodeURIComponent(city.label)}`}
-            className="group block"
+            className="group block focus:outline-none focus:ring-2 focus:ring-primary-400 rounded-xl"
+            tabIndex={0}
           >
-            <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl p-6 text-center transition-all duration-300 group-hover:shadow-medium group-hover:scale-105">
-              <img src={city.image} alt={city.label} className="w-20 h-20 object-cover rounded-full mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors">
+            <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl p-6 text-center transition-all duration-300 group-hover:shadow-2xl group-hover:scale-110 group-hover:-translate-y-2 group-focus:shadow-2xl group-focus:scale-110 group-focus:-translate-y-2 cursor-pointer shadow-md hover:bg-white/90">
+              <img src={city.image} alt={city.label} className="w-20 h-20 object-cover rounded-full mx-auto mb-3 shadow-lg transition-transform duration-300 group-hover:scale-110 group-focus:scale-110" />
+              <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 group-focus:text-primary-700 transition-colors">
                 {city.label.split(',')[0]}
               </h3>
               <p className="text-sm text-gray-600 mt-1">

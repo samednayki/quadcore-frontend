@@ -226,7 +226,7 @@ const SearchForm: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Hata mesajları */}
         {errors.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 animate-fade-in">
             <ul className="text-red-600 text-sm space-y-1">
               {errors.map((error, index) => (
                 <li key={index}>• {error}</li>
@@ -246,7 +246,7 @@ const SearchForm: React.FC = () => {
             value={formData.location}
             onChange={handleLocationChange}
             placeholder="City, hotel or destination"
-            className="input-field pl-10"
+            className="input-field pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
           />
           {isLoadingSuggestions && (
             <div className="absolute left-0 right-0 top-16 bg-white border rounded shadow p-2 text-sm text-gray-500 z-20">Loading...</div>
@@ -281,7 +281,7 @@ const SearchForm: React.FC = () => {
               selected={formData.checkIn}
               onChange={(date) => handleInputChange('checkIn', date)}
               minDate={new Date()}
-              className="input-field pl-3 pr-3"
+              className="input-field pl-3 pr-3 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
               dateFormat="dd/MM/yyyy"
               placeholderText="Select check-in date"
             />
@@ -294,7 +294,7 @@ const SearchForm: React.FC = () => {
               selected={formData.checkOut}
               onChange={(date) => handleInputChange('checkOut', date)}
               minDate={formData.checkIn ? addDays(formData.checkIn, 1) : new Date()}
-              className="input-field pl-3 pr-3"
+              className="input-field pl-3 pr-3 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
               dateFormat="dd/MM/yyyy"
               placeholderText="Select check-out date"
             />
@@ -358,7 +358,9 @@ const SearchForm: React.FC = () => {
                 )}
               </div>
             ))}
-            <button type="button" onClick={addRoom} className="text-green-600 mt-4 flex items-center gap-1"><Plus size={18} /> Add Room</button>
+            <button type="button" onClick={addRoom} className="text-green-600 mt-4 flex items-center gap-1 transition-all duration-200 hover:scale-105 hover:bg-green-50 active:scale-95 px-3 py-2 rounded-lg">
+              <Plus size={18} /> Add Room
+            </button>
           </div>
         </div>
 
@@ -394,7 +396,7 @@ const SearchForm: React.FC = () => {
         {/* Arama butonu */}
         <button
           type="submit"
-          className="w-full btn-primary py-3 text-lg font-semibold flex items-center justify-center gap-2"
+          className="w-full btn-primary py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95"
         >
           <Search size={20} className="inline-block" />
           Search Hotels
