@@ -242,7 +242,7 @@ const SearchForm: React.FC = () => {
 
   return (
     <div className="card p-6 shadow-medium">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* Hata mesajları */}
         {errors.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 animate-fade-in">
@@ -255,18 +255,20 @@ const SearchForm: React.FC = () => {
         )}
 
         {/* Lokasyon */}
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-          Where do you want to go?
+        <div className="mb-8">
+          <label className="block text-2xl font-semibold text-gray-900 mb-4">
+            Where do you want to go?
           </label>
-          <span className="absolute left-3 top-10 text-gray-400 pointer-events-none"><MapPin size={20} /></span>
-          <input
-            type="text"
-            value={formData.location}
-            onChange={handleLocationChange}
-            placeholder="City, hotel or destination"
-            className="input-field pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
-          />
+          <div className="relative bg-white border border-gray-300 rounded-lg shadow-sm flex items-center">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xl text-gray-400 pointer-events-none z-10"><span role="img" aria-label="location">📍</span></span>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={handleLocationChange}
+              placeholder="City, hotel or destination"
+              className="w-full h-12 pl-10 pr-3 bg-transparent border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg text-base"
+            />
+          </div>
           {isLoadingSuggestions && (
             <div className="absolute left-0 right-0 top-16 bg-white border rounded shadow p-2 text-sm text-gray-500 z-20">Loading...</div>
           )}
@@ -293,8 +295,8 @@ const SearchForm: React.FC = () => {
         {/* Tarih seçimi */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              Check-in Date <Calendar size={18} className="inline-block text-gray-400" />
+            <label className="block text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <span role="img" aria-label="calendar">📅</span> Check-in Date
             </label>
             <DatePicker
               selected={formData.checkIn}
@@ -306,8 +308,8 @@ const SearchForm: React.FC = () => {
             />
           </div>
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              Check-out Date <Calendar size={18} className="inline-block text-gray-400" />
+            <label className="block text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <span role="img" aria-label="calendar">📅</span> Check-out Date
             </label>
             <DatePicker
               selected={formData.checkOut}
@@ -322,36 +324,69 @@ const SearchForm: React.FC = () => {
 
         {/* Misafir bilgileri */}
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <User size={18} className="inline-block" /> Guests
+          <label className="block text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-3">
+            <span role="img" aria-label="guests" className="text-3xl">🧑‍🤝‍🧑</span> Guests
           </label>
           <div className="border rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-red-600 font-semibold">Guests</span>
+              <span className="text-lg text-red-600 font-semibold">Guests and Rooms</span>
               <span className="text-lg font-bold text-gray-900">{totalGuests} Guest{totalGuests > 1 ? 's' : ''} {rooms.length} Room{rooms.length > 1 ? 's' : ''}</span>
             </div>
             {rooms.map((room, idx) => (
               <div key={idx} className="border-t pt-4 mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold flex items-center gap-1"><Bed size={16} className="inline-block text-gray-400 align-text-bottom" /> Room {idx + 1}</span>
+                  <span className="font-semibold flex items-center gap-1 text-2xl"><span role="img" aria-label="room">🛏️</span> Room {idx + 1}</span>
                   {rooms.length > 1 && (
                     <button type="button" onClick={() => removeRoom(idx)} className="text-red-500 text-xs ml-2">Remove</button>
                   )}
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex items-center gap-1"><User size={16} className="inline-block text-gray-400 align-text-bottom" /> Adult</span>
-                  <div className="flex items-center space-x-2">
-                    <button type="button" onClick={() => updateRoom(idx, 'adults', Math.max(1, room.adults - 1))} className="w-8 h-8 rounded border border-red-400 text-red-600 flex items-center justify-center">-</button>
-                    <span className="w-8 text-center">{room.adults}</span>
-                    <button type="button" onClick={() => updateRoom(idx, 'adults', room.adults + 1)} className="w-8 h-8 rounded border border-red-400 text-red-600 flex items-center justify-center">+</button>
+                {/* Adult & Children modern kutu */}
+                <div className="bg-white rounded-xl shadow-md p-4 flex flex-col gap-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex items-center gap-1 text-2xl font-semibold"><span role="img" aria-label="adult">👨</span> Adult</span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => updateRoom(idx, 'adults', Math.max(1, room.adults - 1))}
+                        className="w-8 h-8 rounded-lg border border-red-400 text-red-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-red-100 active:scale-90 shadow-sm"
+                      >
+                        –
+                      </button>
+                      <span className="w-8 text-center text-lg font-semibold select-none">{room.adults}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateRoom(idx, 'adults', room.adults + 1)}
+                        className="w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex items-center gap-1"><Baby size={16} className="inline-block text-gray-400 align-text-bottom" /> Children <span className="text-xs text-gray-500">0-17</span></span>
-                  <div className="flex items-center space-x-2">
-                    <button type="button" onClick={() => updateRoom(idx, 'children', Math.max(0, room.children - 1))} className="w-8 h-8 rounded border border-red-400 text-red-600 flex items-center justify-center">-</button>
-                    <span className="w-8 text-center">{room.children}</span>
-                    <button type="button" onClick={() => updateRoom(idx, 'children', room.children + 1)} className="w-8 h-8 rounded border border-red-400 text-red-600 flex items-center justify-center">+</button>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex items-center gap-2 text-2xl font-semibold">
+                      <span role="img" aria-label="children">👶</span>
+                      <span className="flex items-end gap-2">
+                        <span>Children</span>
+                        <span className="text-base text-gray-500 font-normal align-bottom mb-0.5">[0-17]</span>
+                      </span>
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => updateRoom(idx, 'children', Math.max(0, room.children - 1))}
+                        className="w-8 h-8 rounded-lg border border-red-400 text-red-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-red-100 active:scale-90 shadow-sm"
+                      >
+                        –
+                      </button>
+                      <span className="w-8 text-center text-lg font-semibold select-none">{room.children}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateRoom(idx, 'children', room.children + 1)}
+                        className="w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {/* Çocuk yaşları seçimi */}
@@ -377,8 +412,8 @@ const SearchForm: React.FC = () => {
                 )}
               </div>
             ))}
-            <button type="button" onClick={addRoom} className="text-green-600 mt-4 flex items-center gap-1 transition-all duration-200 hover:scale-105 hover:bg-green-50 active:scale-95 px-3 py-2 rounded-lg">
-              <Plus size={18} /> Add Room
+            <button type="button" onClick={addRoom} className="text-green-600 mt-4 flex items-center gap-1 transition-all duration-200 hover:scale-105 hover:bg-green-50 active:scale-95 px-3 py-2 rounded-lg text-2xl font-semibold">
+              <span role="img" aria-label="add">➕</span> Add Room
             </button>
           </div>
         </div>
@@ -386,8 +421,8 @@ const SearchForm: React.FC = () => {
         {/* Para birimi ve ülke */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Banknote size={18} className="inline-block" /> Currency
+            <label className="block text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <span role="img" aria-label="currency">💵</span> Currency
             </label>
             <Select
               value={currencyOptions.find(option => option.value === formData.currency)}
@@ -400,8 +435,8 @@ const SearchForm: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Globe size={18} className="inline-block" /> Nationality
+            <label className="block text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <span role="img" aria-label="nationality">🌍</span> Nationality
             </label>
             <Select
               value={countryOptions.find(option => option.value === formData.nationality) || null}
@@ -419,9 +454,9 @@ const SearchForm: React.FC = () => {
         {/* Arama butonu */}
         <button
           type="submit"
-          className="w-full btn-primary py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95"
+          className="w-full btn-primary py-4 text-2xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95"
         >
-          <Search size={20} className="inline-block" />
+          <Search size={28} className="inline-block" />
           Search Hotels
         </button>
       </form>
