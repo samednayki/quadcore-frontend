@@ -7,11 +7,11 @@ const messages = [
   'Book with confidence',
 ];
 
-const colorClasses = [
-  'text-blue-400',
-  'text-purple-500',
-  'text-green-500',
-  'text-orange-400',
+const gradientClasses = [
+  'bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500',
+  'bg-gradient-to-r from-green-400 via-blue-500 to-purple-500',
+  'bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600',
+  'bg-gradient-to-r from-purple-500 via-blue-400 to-green-400',
 ];
 
 const AnimatedIntro: React.FC = () => {
@@ -31,12 +31,13 @@ const AnimatedIntro: React.FC = () => {
   }, [index]);
 
   return (
-    <div className="flex justify-center items-center min-h-[60px] select-none">
+    <div className="flex justify-center items-center min-h-[90px] select-none overflow-x-auto">
       <span
-        className={`text-3xl md:text-4xl font-bold drop-shadow-lg transition-opacity duration-400 ease-in-out ${
-          show ? 'opacity-100' : 'opacity-0'
-        } ${colorClasses[index]}`}
-        style={{ letterSpacing: '1px' }}
+        className={`text-4xl md:text-6xl font-extrabold drop-shadow-2xl transition-opacity duration-400 ease-in-out 
+          ${show ? 'opacity-100' : 'opacity-0'} 
+          ${gradientClasses[index]} 
+          bg-clip-text text-transparent animate-gradient-x whitespace-nowrap`}
+        style={{ letterSpacing: '2px' }}
       >
         {messages[index]}
       </span>

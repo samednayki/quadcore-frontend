@@ -205,11 +205,24 @@ const SearchForm: React.FC = () => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const handleSuggestionClick = (item: any) => {
-    handleInputChange('location', item.city?.name || item.hotel?.name || item.airport?.name || item.name);
+    // If hotel suggestion, set input to hotel name; if location, set to city/airport name
+    let value = '';
+    if (item.type === 2 && item.hotel?.name) {
+      value = item.hotel.name;
+    } else if (item.type === 1 && (item.city?.name || item.airport?.name)) {
+      value = item.city?.name || item.airport?.name;
+    } else {
+      value = item.name;
+    }
+    handleInputChange('location', value);
     setSuggestions([]);
   };
 
   // Benzersiz ve anlamlı öneri listesi oluştur
+  // Yeni: type:1 (location) ve type:2 (hotel) ayrı ayrı gruplansın
+  const locationSuggestions = suggestions.filter(item => item.type === 1 && (item.city?.name || item.airport?.name));
+  const hotelSuggestions = suggestions.filter(item => item.type === 2 && item.hotel?.name);
+
   const uniqueSuggestions = Array.from(
     new Map(
       suggestions
@@ -268,28 +281,51 @@ const SearchForm: React.FC = () => {
               placeholder="City, hotel or destination"
               className="w-full h-12 pl-10 pr-3 bg-transparent border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg text-base"
             />
+            {/* Suggestions dropdown moved below input */}
+            <div className="absolute left-0 right-0 top-full mt-2 z-20">
+              {isLoadingSuggestions && (
+                <div className="bg-white border rounded shadow p-2 text-sm text-gray-500">Loading...</div>
+              )}
+              {(locationSuggestions.length > 0 || hotelSuggestions.length > 0) && (
+                <ul className="bg-white border rounded shadow max-h-60 overflow-y-auto">
+                  {locationSuggestions.length > 0 && (
+                    <>
+                      <li className="px-4 py-2 text-xs text-gray-400 font-semibold bg-gray-50">Locations</li>
+                      {locationSuggestions.map((item, idx) => {
+                        const displayName = item.city?.name || item.airport?.name || item.name;
+                        return (
+                          <li
+                            key={(item.city?.id || item.airport?.id || item.id || displayName || "") + "-loc-" + idx}
+                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                            onClick={() => handleSuggestionClick(item)}
+                          >
+                            {displayName}
+                          </li>
+                        );
+                      })}
+                    </>
+                  )}
+                  {hotelSuggestions.length > 0 && (
+                    <>
+                      <li className="px-4 py-2 text-xs text-gray-400 font-semibold bg-gray-50">Hotels</li>
+                      {hotelSuggestions.map((item, idx) => {
+                        const displayName = item.hotel?.name;
+                        return (
+                          <li
+                            key={(item.hotel?.id || item.id || displayName || "") + "-hotel-" + idx}
+                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                            onClick={() => handleSuggestionClick(item)}
+                          >
+                            {displayName}
+                          </li>
+                        );
+                      })}
+                    </>
+                  )}
+                </ul>
+              )}
+            </div>
           </div>
-          {isLoadingSuggestions && (
-            <div className="absolute left-0 right-0 top-16 bg-white border rounded shadow p-2 text-sm text-gray-500 z-20">Loading...</div>
-          )}
-          {uniqueSuggestions.length > 0 && (
-            <ul className="absolute left-0 right-0 top-16 bg-white border rounded shadow z-20 max-h-60 overflow-y-auto">
-              {uniqueSuggestions.map((item, idx) => {
-                const displayName = item.city?.name || item.hotel?.name || item.airport?.name || item.name;
-                return (
-                  <li
-                    key={
-                      (item.city?.id || item.hotel?.id || item.airport?.id || item.id || displayName || "") + "-" + idx
-                    }
-                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSuggestionClick(item)}
-                  >
-                    {displayName}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
         </div>
 
         {/* Tarih seçimi */}
