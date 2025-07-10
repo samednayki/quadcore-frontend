@@ -32,7 +32,7 @@ const SearchFilters: React.FC = () => {
         </button>
       </div>
 
-      {/* Fiyat Aralığı */}
+      {/* Price Range */}
       <div>
         <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
         <div className="space-y-2">
@@ -52,7 +52,7 @@ const SearchFilters: React.FC = () => {
         </div>
       </div>
 
-      {/* Yıldız Derecelendirmesi */}
+      {/* Rating */}
       <div>
         <h4 className="font-medium text-gray-900 mb-3">Rating</h4>
         <div className="space-y-2">
@@ -72,7 +72,7 @@ const SearchFilters: React.FC = () => {
         </div>
       </div>
 
-      {/* Özellikler */}
+      {/* Features */}
       <div>
         <h4 className="font-medium text-gray-900 mb-3">Features</h4>
         <div className="space-y-2">
@@ -90,7 +90,7 @@ const SearchFilters: React.FC = () => {
         </div>
       </div>
 
-      {/* Uygula Butonu */}
+      {/* Apply Button */}
       <button className="w-full btn-primary">
         Apply Filters
       </button>

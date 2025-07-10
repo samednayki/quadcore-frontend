@@ -1,9 +1,9 @@
 import { SearchCriteria, Price } from '../types';
 import { CURRENCIES } from '../constants';
 
-// Tarih formatlama
+// Date formatting
 export const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('tr-TR', {
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -52,32 +52,32 @@ export const isDateValid = (date: Date): boolean => {
   return date instanceof Date && !isNaN(date.getTime());
 };
 
-// Arama kriterleri validasyonu
+// Search criteria validation
 export const validateSearchCriteria = (criteria: Partial<SearchCriteria>): string[] => {
   const errors: string[] = [];
 
   if (!criteria.location?.trim()) {
-    errors.push('Lokasyon seçimi zorunludur');
+    errors.push('Location selection is required');
   }
 
   if (!criteria.checkIn || !isDateValid(criteria.checkIn)) {
-    errors.push('Giriş tarihi geçerli olmalıdır');
+    errors.push('Check-in date must be valid');
   }
 
   if (!criteria.checkOut || !isDateValid(criteria.checkOut)) {
-    errors.push('Çıkış tarihi geçerli olmalıdır');
+    errors.push('Check-out date must be valid');
   }
 
   if (criteria.checkIn && criteria.checkOut && criteria.checkIn >= criteria.checkOut) {
-    errors.push('Çıkış tarihi giriş tarihinden sonra olmalıdır');
+    errors.push('Check-out date must be after check-in date');
   }
 
   if (!criteria.adults || criteria.adults < 1) {
-    errors.push('En az 1 yetişkin seçilmelidir');
+    errors.push('At least 1 adult must be selected');
   }
 
   if (criteria.children && criteria.children.some(child => child.age < 0 || child.age > 17)) {
-    errors.push('Çocuk yaşları 0-17 arasında olmalıdır');
+    errors.push('Children ages must be between 0-17');
   }
 
   return errors;
@@ -152,7 +152,7 @@ export const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Sayfa başlığı güncelleme
+// Update page title
 export const updatePageTitle = (title: string): void => {
-  document.title = `${title} - Otel Rezervasyon Sistemi`;
+  document.title = `${title} - Hotel Reservation System`;
 }; 

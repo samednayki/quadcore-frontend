@@ -54,7 +54,7 @@ const SearchResultsPage: React.FC = () => {
         {
           id: '3',
           name: 'Cappadocia Cave Hotel',
-          location: 'Nevşehir, Turkey',
+          location: 'Nevsehir, Turkey',
           rating: 4.6,
           imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400',
           description: 'Cappadocia Cave Hotel is a luxury hotel located in the heart of Cappadocia. It offers a breathtaking view of the Cappadocia Valley. The hotel is located in the heart of Cappadocia, near the historical peninsula. It is a perfect choice for business trips and holidays.',

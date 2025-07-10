@@ -12,7 +12,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
   return (
     <div className="card overflow-hidden hover:shadow-medium transition-shadow duration-300">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Otel resmi */}
+        {/* Hotel image */}
         <div className="md:col-span-1">
           <img
             src={hotel.imageUrl}
@@ -21,7 +21,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
           />
         </div>
 
-        {/* Otel bilgileri */}
+        {/* Hotel info */}
         <div className="md:col-span-2 p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -42,10 +42,10 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
             </div>
           </div>
 
-          {/* Açıklama */}
+          {/* Description */}
           <p className="text-gray-700 mb-4">{hotel.description}</p>
 
-          {/* Özellikler */}
+          {/* Features */}
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-900 mb-2">Features</h4>
             <div className="flex flex-wrap gap-2">
@@ -68,7 +68,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel }) => {
             </div>
           </div>
 
-          {/* Butonlar */}
+          {/* Buttons */}
           <div className="flex space-x-3">
             <Link
               to={`/hotel/${hotel.id}`}

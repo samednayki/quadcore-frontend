@@ -5,9 +5,9 @@ import SearchPage from './pages/SearchPage/SearchPage';
 import SearchResultsPage from './pages/SearchResultsPage/SearchResultsPage';
 import HotelDetailPage from './pages/HotelDetailPage/HotelDetailPage';
 import ReservationPage from './pages/ReservationPage/ReservationPage';
-import HelpCenterPage from './pages/HelpCenterPage';
-import ContactPage from './pages/ContactPage';
-import FAQPage from './pages/FAQPage';
+import HelpCenterPage from './pages/FooterPage/HelpCenterPage';
+import ContactPage from './pages/FooterPage/ContactPage';
+import FAQPage from './pages/FooterPage/FAQPage';
 import { authAPI } from './services/api';
 
 function App() {

@@ -34,21 +34,21 @@ export const POPULAR_CITIES = [
   { value: 'Amsterdam', label: 'Amsterdam, Netherlands', image: 'https://images.unsplash.com/photo-1584003564911-a7a321c84e1c?q=80&w=984&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
 ] as const;
 
-// Otel özellikleri
+// Hotel amenities
 export const AMENITIES = [
   { value: 'wifi', label: 'Wi-Fi', icon: 'wifi' },
-  { value: 'parking', label: 'Ücretsiz Otopark', icon: 'car' },
-  { value: 'pool', label: 'Havuz', icon: 'droplets' },
-  { value: 'gym', label: 'Spor Salonu', icon: 'dumbbell' },
+  { value: 'parking', label: 'Free Parking', icon: 'car' },
+  { value: 'pool', label: 'Pool', icon: 'droplets' },
+  { value: 'gym', label: 'Gym', icon: 'dumbbell' },
   { value: 'spa', label: 'Spa & Wellness', icon: 'heart' },
-  { value: 'restaurant', label: 'Restoran', icon: 'utensils' },
+  { value: 'restaurant', label: 'Restaurant', icon: 'utensils' },
   { value: 'bar', label: 'Bar', icon: 'wine' },
   { value: 'concierge', label: 'Concierge', icon: 'user-check' },
-  { value: 'room-service', label: 'Oda Servisi', icon: 'bell' },
-  { value: 'air-conditioning', label: 'Klima', icon: 'snowflake' },
+  { value: 'room-service', label: 'Room Service', icon: 'bell' },
+  { value: 'air-conditioning', label: 'Air Conditioning', icon: 'snowflake' },
 ] as const;
 
-// Fiyat aralıkları
+// Price ranges
 export const PRICE_RANGES = [
   { value: '0-50', label: '0 - 50', min: 0, max: 50 },
   { value: '50-100', label: '50 - 100', min: 50, max: 100 },
@@ -57,13 +57,13 @@ export const PRICE_RANGES = [
   { value: '500+', label: '500+', min: 500, max: Infinity },
 ] as const;
 
-// Yıldız derecelendirmeleri
+// Star ratings
 export const RATINGS = [
-  { value: '5', label: '5 Yıldız', stars: 5 },
-  { value: '4', label: '4 Yıldız ve üzeri', stars: 4 },
-  { value: '3', label: '3 Yıldız ve üzeri', stars: 3 },
-  { value: '2', label: '2 Yıldız ve üzeri', stars: 2 },
-  { value: '1', label: '1 Yıldız ve üzeri', stars: 1 },
+  { value: '5', label: '5 Stars', stars: 5 },
+  { value: '4', label: '4 Stars and above', stars: 4 },
+  { value: '3', label: '3 Stars and above', stars: 3 },
+  { value: '2', label: '2 Stars and above', stars: 2 },
+  { value: '1', label: '1 Star and above', stars: 1 },
 ] as const;
 
 // API Endpoints
@@ -75,13 +75,13 @@ export const API_ENDPOINTS = {
   LOCATIONS: '/api/locations',
 } as const;
 
-// Sayfa başlıkları
+// Page titles
 export const PAGE_TITLES = {
-  HOME: 'Otel Rezervasyon Sistemi',
-  SEARCH: 'Otel Ara',
-  SEARCH_RESULTS: 'Arama Sonuçları',
-  HOTEL_DETAIL: 'Otel Detayı',
-  RESERVATION: 'Rezervasyon',
+  HOME: 'Hotel Reservation System',
+  SEARCH: 'Search Hotel',
+  SEARCH_RESULTS: 'Search Results',
+  HOTEL_DETAIL: 'Hotel Detail',
+  RESERVATION: 'Reservation',
 } as const;
 
 // Local Storage Keys
