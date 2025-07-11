@@ -160,4 +160,20 @@ export const fetchBackendCurrencies = async () => {
   return response.data;
 };
 
+// Check-in günlerini getir
+export const fetchCheckInDays = async (request: {
+  productType: number;
+  IncludeSubLocations: boolean;
+  Product: any;
+  ArrivalLocations: Array<{ Id: string; Type: number }>;
+}) => {
+  const token = localStorage.getItem('token');
+  const response = await apiClient.post('/api/checkin', request, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
 export default apiClient; 

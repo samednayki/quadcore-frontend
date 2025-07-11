@@ -8,7 +8,7 @@ import { addDays } from '../../utils';
 import 'react-datepicker/dist/react-datepicker.css';
 // ICONS
 import { MapPin, Calendar, User, Plus, Banknote, Globe, Baby, Search, Bed } from 'lucide-react';
-import { fetchBackendNationalities, fetchBackendCurrencies, searchAPI } from '../../services/api';
+import { fetchBackendNationalities, fetchBackendCurrencies, searchAPI, fetchCheckInDays } from '../../services/api';
 
 const SearchForm: React.FC = () => {
   const navigate = useNavigate();
@@ -162,6 +162,33 @@ const SearchForm: React.FC = () => {
     </components.Option>
   );
 
+  const [checkInDates, setCheckInDates] = useState<Date[] | null>(null);
+
+  // Uygun check-in günlerini otomatik çek (ör: location veya productType değişince)
+  useEffect(() => {
+    const fetchDates = async () => {
+      if (!formData.location) return;
+      // ArrivalLocations örneği: (gelişmişte burası dinamik yapılabilir)
+      const arrivalLocations = [
+        { Id: '5', Type: 1 }
+      ];
+      try {
+        const checkInResponse = await fetchCheckInDays({
+          productType: 2,
+          IncludeSubLocations: true,
+          Product: null,
+          ArrivalLocations: arrivalLocations
+        });
+        const dates = checkInResponse?.body?.dates || [];
+        setCheckInDates(dates.map((d: string) => new Date(d)));
+      } catch {
+        setCheckInDates(null);
+      }
+    };
+    fetchDates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.location]);
+
   // Form gönderme
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,7 +223,6 @@ const SearchForm: React.FC = () => {
       adults: formData.adults!.toString(),
       children: JSON.stringify(formData.children),
     });
-
     navigate(`/search?${params.toString()}`);
   };
 
@@ -336,10 +362,11 @@ const SearchForm: React.FC = () => {
             </label>
             <DatePicker
               selected={formData.checkIn}
-              onChange={(date) => handleInputChange('checkIn', date)}
+              onChange={date => handleInputChange('checkIn', date)}
+              includeDates={checkInDates || undefined}
               minDate={new Date()}
-              className="input-field pl-3 pr-3 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
               dateFormat="dd/MM/yyyy"
+              className="input-field pl-3 pr-3 transition-all duration-200 focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:shadow-lg"
               placeholderText="Select check-in date"
             />
           </div>
@@ -392,7 +419,8 @@ const SearchForm: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateRoom(idx, 'adults', room.adults + 1)}
-                        className="w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm"
+                        className={`w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm ${room.adults >= 9 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={room.adults >= 9}
                       >
                         +
                       </button>
@@ -418,7 +446,8 @@ const SearchForm: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateRoom(idx, 'children', room.children + 1)}
-                        className="w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm"
+                        className={`w-8 h-8 rounded-lg border border-green-400 text-green-600 text-xl font-bold flex items-center justify-center transition-all duration-200 hover:bg-green-100 active:scale-110 shadow-sm ${room.children >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={room.children >= 4}
                       >
                         +
                       </button>
