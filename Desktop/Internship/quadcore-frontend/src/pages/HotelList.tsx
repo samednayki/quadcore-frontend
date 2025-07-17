@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './HotelList.css';
+import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
 
 interface Hotel {
   id: string;
@@ -293,8 +294,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
     <div className="hotel-list-root" style={{
       minHeight: '100vh',
       display: 'flex',
-      flexDirection: 'column',
-      background: `url(${backgroundUrl}) center/cover no-repeat fixed`
+      flexDirection: 'column'
     }}>
       {/* HEADER */}
       <header style={{ 
@@ -324,9 +324,15 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             <span style={{ fontWeight: 800, fontSize: 28, color: 'white', letterSpacing: -1 }}>HotelRes</span>
           </div>
           <nav style={{ display: 'flex', gap: 32 }}>
-            <a href="#" style={{ color: 'white', fontWeight: 600, textDecoration: 'none', fontSize: 18 }}>Home Page</a>
-            <a href="#" style={{ color: 'white', fontWeight: 600, textDecoration: 'none', fontSize: 18 }}>Search Hotels</a>
-            <a href="#" style={{ color: 'white', fontWeight: 600, textDecoration: 'none', fontSize: 18 }}>My Reservations</a>
+            <a href="#" className="nav-btn">
+              {FaHome({ style: { marginRight: 8, fontSize: 20 } })} Home
+            </a>
+            <a href="#" className="nav-btn">
+              {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
+            </a>
+            <a href="#" className="nav-btn">
+              {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
+            </a>
           </nav>
         </div>
       </header>
@@ -343,14 +349,16 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
         }}>
           {/* Header */}
           <div className="hotel-list-header">
-            <div className="search-summary">
+            <div className="header-back">
               <button 
                 onClick={() => navigate('/')} 
-                className="back-btn"
+                className="header-btn"
                 title="Back to Search"
               >
                 ← Back to Search
               </button>
+            </div>
+            <div className="header-center">
               <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <img 
                   src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
@@ -368,8 +376,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                 {filteredAndSortedHotels.length} hotel{filteredAndSortedHotels.length !== 1 ? 's' : ''} found
               </p>
             </div>
-            
-            <div className="sort-controls">
+            <div className="header-sort">
               <select 
                 value={sortBy} 
                 onChange={(e) => setSortBy(e.target.value as 'price' | 'rating' | 'stars')}

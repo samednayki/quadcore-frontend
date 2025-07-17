@@ -1123,10 +1123,11 @@ const SearchPage: React.FC = () => {
                       <div 
                         className="custom-select-input"
                         onClick={() => {
-                          console.log('Currency clicked!', !showCurrencyDropdown);
+                          const scrollY = window.scrollY;
                           setShowCurrencyDropdown(!showCurrencyDropdown);
                           setShowNationalityDropdown(false);
                           setShowAutocomplete(false);
+                          setTimeout(() => window.scrollTo({ top: scrollY }), 0);
                         }}
                       >
                         <span className="select-text">
@@ -1160,7 +1161,6 @@ const SearchPage: React.FC = () => {
                               value={currencySearch}
                               onChange={(e) => setCurrencySearch(e.target.value)}
                               className="dropdown-search-input"
-                              autoFocus
                             />
                           </div>
                           <div className="dropdown-items-container">
@@ -1210,10 +1210,11 @@ const SearchPage: React.FC = () => {
                       <div 
                         className="custom-select-input"
                         onClick={() => {
-                          console.log('Nationality clicked!', !showNationalityDropdown);
+                          const scrollY = window.scrollY;
                           setShowNationalityDropdown(!showNationalityDropdown);
                           setShowCurrencyDropdown(false);
                           setShowAutocomplete(false);
+                          setTimeout(() => window.scrollTo({ top: scrollY }), 0);
                         }}
                       >
                         <span className="select-text">
@@ -1252,7 +1253,6 @@ const SearchPage: React.FC = () => {
                               value={nationalitySearch}
                               onChange={(e) => setNationalitySearch(e.target.value)}
                               className="dropdown-search-input"
-                              autoFocus
                             />
                           </div>
                           <div className="dropdown-items-container">
