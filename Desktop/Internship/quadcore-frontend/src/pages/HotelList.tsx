@@ -260,7 +260,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
           if (!offerB) return -1;
           return offerA.price.amount - offerB.price.amount;
         case 'rating':
-          return b.rating - a.rating;
+          console.log('SORTING BY RATING:', a.name, a.rating, b.name, b.rating);
+          return (parseFloat(b.rating as any) || 0) - (parseFloat(a.rating as any) || 0);
         case 'stars':
           return b.stars - a.stars;
         default:
@@ -410,7 +411,18 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                         }
                       }}
                     />
-                    {renderStars(stars)} {stars} Star{stars !== 1 ? 's' : ''}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="hotel-stars">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <span key={i} className={i < stars ? 'star-filled' : 'star-empty'} style={{ fontSize: '18px' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={i < stars ? '#fbbf24' : '#d1d5db'} />
+                            </svg>
+                          </span>
+                        ))}
+                      </span>
+                      <span className="star-label" style={{ marginLeft: 10, minWidth: 60, whiteSpace: 'nowrap' }}>{stars} Star{stars !== 1 ? 's' : ''}</span>
+                    </span>
                   </label>
                 ))}
               </div>
@@ -475,10 +487,6 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                       <div className="hotel-info">
                         <div className="hotel-header">
                           <h3 className="hotel-name">{hotel.name}</h3>
-                          <div className="hotel-stars">
-                            {renderStars(hotel.stars)}
-                            <span className="star-count">({hotel.stars})</span>
-                          </div>
                         </div>
 
                         <div className="hotel-location">
@@ -510,35 +518,89 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                           </div>
                         )}
 
-                        {/* Price and Booking */}
-                        <div className="hotel-booking">
-                          {bestOffer ? (
-                            <>
-                              <div className="price-info">
-                                <div className="price-main">
-                                  <span className="price-amount">
-                                    {bestOffer.price.currency} {bestOffer.price.amount}
+                        {/* YENİ: Fiyat ve Yıldızlar Yanyana */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                          {/* Yıldızlar */}
+                          <div className="hotel-stars">
+                            {Array.from({ length: 5 }, (_, i) => {
+                              const fullStars = Math.floor(hotel.stars);
+                              const hasHalfStar = hotel.stars % 1 >= 0.5;
+                              // SVG yıldız path'i
+                              const starSvg = (fill: string) => (
+                                <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
+                                </svg>
+                              );
+                              if (i < fullStars) {
+                                // Dolu yıldız
+                                return (
+                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    {starSvg('#fbbf24')}
                                   </span>
-                                  <span className="price-per-night">per {bestOffer.night} night{bestOffer.night !== 1 ? 's' : ''}</span>
-                                </div>
-                                {bestOffer.price.percent < 0 && (
-                                  <div className="price-discount">
-                                    <span className="old-price">
-                                      {bestOffer.price.currency} {bestOffer.price.oldAmount}
+                                );
+                              } else if (i === fullStars && hasHalfStar) {
+                                // Yarım yıldız
+                                return (
+                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                      <defs>
+                                        <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                                          <stop offset="50%" stopColor="#fbbf24"/>
+                                          <stop offset="50%" stopColor="#d1d5db"/>
+                                        </linearGradient>
+                                      </defs>
+                                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                                    </svg>
+                                  </span>
+                                );
+                              } else {
+                                // Boş yıldız
+                                return (
+                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    {starSvg('#d1d5db')}
+                                  </span>
+                                );
+                              }
+                            })}
+                            <span className="star-count" style={{ marginLeft: 4 }}>({hotel.stars})</span>
+                          </div>
+                          {/* Rating biraz aşağıda, kart yüksekliği için margin/padding artırıldı */}
+                          <div style={{ fontWeight: 500, color: '#64748b', fontSize: '0.98rem', lineHeight: 1, marginTop: 12, marginBottom: 4 }}>
+                            Rating: {hotel.rating}
+                          </div>
+                          {/* Fiyat ve Book Now */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                            {/* Price Box */}
+                            <div style={{ background: 'rgba(30, 58, 138, 0.06)', borderRadius: 10, padding: '12px 18px', marginBottom: 6, minWidth: 140, boxShadow: '0 2px 8px rgba(30,58,138,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              {bestOffer ? (
+                                <div className="price-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                  <div className="price-main">
+                                    <span className="price-amount">
+                                      {bestOffer.price.currency} {bestOffer.price.amount}
                                     </span>
-                                    <span className="discount-percent">
-                                      {Math.abs(bestOffer.price.percent)}% OFF
+                                    <span className="price-per-night" style={{ marginLeft: 8 }}>
+                                      per {bestOffer.night} night{bestOffer.night !== 1 ? 's' : ''}
                                     </span>
                                   </div>
-                                )}
-                              </div>
-                              <button className="book-btn">Book Now</button>
-                            </>
-                          ) : (
-                            <div className="no-availability">
-                              <span>No availability</span>
+                                  {bestOffer.price.percent < 0 && (
+                                    <div className="price-discount" style={{ marginTop: 4 }}>
+                                      <span className="old-price">
+                                        {bestOffer.price.currency} {bestOffer.price.oldAmount}
+                                      </span>
+                                      <span className="discount-percent">
+                                        {Math.abs(bestOffer.price.percent)}% OFF
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="no-availability">
+                                  <span>No availability</span>
+                                </div>
+                              )}
                             </div>
-                          )}
+                            <button className="book-btn">Book Now</button>
+                          </div>
                         </div>
                       </div>
                     </div>
