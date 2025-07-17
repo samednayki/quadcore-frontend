@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaCalendarAlt, FaUserFriends, FaBed, FaUser, FaChild, FaPlus, FaMinus, FaGlobe, FaMoneyBillWave, FaSearch, FaKey, FaUsers, FaHome, FaBookmark } from 'react-icons/fa';
 import './SearchPage.css';
 
@@ -31,12 +32,14 @@ const animatedGradients = [
 ];
 
 const SearchPage: React.FC = () => {
+  const navigate = useNavigate();
   const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
   const [nationalities, setNationalities] = useState<{ id: string; name: string }[]>([]);
   const [loadingCurrency, setLoadingCurrency] = useState(true);
   const [loadingNationality, setLoadingNationality] = useState(true);
   const [loading, setLoading] = useState(true);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [searchError, setSearchError] = useState<string | null>(null);
   
   // Autocomplete states
   const [destinationQuery, setDestinationQuery] = useState('');
@@ -544,6 +547,55 @@ const SearchPage: React.FC = () => {
     }
   }, [showNationalityDropdown]);
 
+  // Search form submit handler
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchError(null);
+
+    // Validation
+    if (!selectedDestination) {
+      setSearchError('Please select a destination');
+      return;
+    }
+
+    if (!selectedCheckInDate) {
+      setSearchError('Please select check-in date');
+      return;
+    }
+
+    if (!selectedCheckOutDate) {
+      setSearchError('Please select check-out date');
+      return;
+    }
+
+    if (getTotalGuests() === 0) {
+      setSearchError('Please add at least one guest');
+      return;
+    }
+
+    // Prepare search parameters
+    const searchParams = {
+      destination: selectedDestination.id,
+      destinationName: selectedDestination.name,
+      checkIn: selectedCheckInDate,
+      checkOut: selectedCheckOutDate,
+      guests: getTotalGuests(),
+      rooms: rooms.length,
+      currency: selectedCurrency,
+      nationality: selectedNationality,
+      roomDetails: rooms.map(room => ({
+        adults: room.adults,
+        children: room.children,
+        childAges: room.childAges
+      }))
+    };
+
+    // Navigate to hotel list with search parameters
+    navigate('/hotels', { 
+      state: { searchParams } 
+    });
+  };
+
   // Animated text effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -577,10 +629,11 @@ const SearchPage: React.FC = () => {
     <>
       <div
         style={{
-          background: `url(${backgroundUrl}) no-repeat center center fixed`,
+          backgroundImage: `url(${backgroundUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
           minHeight: '100vh',
           width: '100vw',
           position: 'relative',
@@ -610,19 +663,26 @@ const SearchPage: React.FC = () => {
               <div className="animated-text-container">
                 <div className={`animated-text ${currentTextIndex === 0 ? 'active' : ''}`}>
                   <img src={logoUrl} alt="HotelRes Logo" className="intro-logo" />
-                  HotelRes'e Hoş Geldiniz
+                  Welcome to HotelRes
                 </div>
-                <div className={`animated-text ${currentTextIndex === 1 ? 'active' : ''}`}>🌟 Dünyanın En İyi Otelleri</div>
-                <div className={`animated-text ${currentTextIndex === 2 ? 'active' : ''}`}>💎 Lüks ve Konfor Bir Arada</div>
-                <div className={`animated-text ${currentTextIndex === 3 ? 'active' : ''}`}>🌍 150+ Ülkede Hizmet</div>
-                <div className={`animated-text ${currentTextIndex === 4 ? 'active' : ''}`}>🎯 En Uygun Fiyat Garantisi</div>
-                <div className={`animated-text ${currentTextIndex === 5 ? 'active' : ''}`}>✨ Unutulmaz Tatil Deneyimleri</div>
+                <div className={`animated-text ${currentTextIndex === 1 ? 'active' : ''}`}>🌟 The World's Best Hotels</div>
+                <div className={`animated-text ${currentTextIndex === 2 ? 'active' : ''}`}>💎 Luxury and Comfort Together</div>
+                <div className={`animated-text ${currentTextIndex === 3 ? 'active' : ''}`}>🌍 Service in 150+ Countries</div>
+                <div className={`animated-text ${currentTextIndex === 4 ? 'active' : ''}`}>🎯 Best Price Guarantee</div>
+                <div className={`animated-text ${currentTextIndex === 5 ? 'active' : ''}`}>✨ Unforgettable Holiday Experiences</div>
               </div>
             </div>
             
             <div className="search-card search-card-v2">
-              <form className="search-form-v2">
+              <form className="search-form-v2" onSubmit={handleSearchSubmit}>
                 <h2 className="search-title-v2">Where do you want to go?</h2>
+                
+                {searchError && (
+                  <div className="search-error-message">
+                    <span className="error-icon">⚠️</span>
+                    {searchError}
+                  </div>
+                )}
                 <div className="destination-row-v2">
                   <span className="destination-icon-v2">📍</span>
                   <input 
@@ -1113,7 +1173,9 @@ const SearchPage: React.FC = () => {
                                 <div 
                                   key={currency.code} 
                                   className="custom-select-item"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setSelectedCurrency(currency.code);
                                     setShowCurrencyDropdown(false);
                                     setCurrencySearch('');
@@ -1203,7 +1265,9 @@ const SearchPage: React.FC = () => {
                                 <div 
                                   key={nationality.id} 
                                   className="custom-select-item"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setSelectedNationality(nationality.id);
                                     setShowNationalityDropdown(false);
                                     setNationalitySearch('');
@@ -1233,7 +1297,9 @@ const SearchPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <button type="submit" className="search-btn-v2">{FaSearch({ className: "search-btn-icon-v2" })} Search Hotels</button>
+                <button type="submit" className="search-btn-v2">
+                  {FaSearch({ className: "search-btn-icon-v2" })} Search Hotels
+                </button>
               </form>
             </div>
           </div>
@@ -1242,8 +1308,15 @@ const SearchPage: React.FC = () => {
       <footer className="footer" style={{ marginTop: '50px', backgroundColor: '#1e3a8a', color: 'white', padding: '40px 0 20px 0' }}>
         <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
           <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h3 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.5rem' }}>🏨 HotelRes</h3>
-            <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>En iyi otel deneyimi için güvenilir partneriniz</p>
+            <h3 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img 
+                src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
+                alt="HotelRes Logo"
+                style={{ height: 48, borderRadius: 12, marginRight: 14, verticalAlign: 'middle' }}
+              />
+              HotelRes
+            </h3>
+            <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>Your trusted partner for the best hotel experience</p>
             <div className="social-links" style={{ display: 'flex', gap: '15px' }}>
               <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📘 Facebook</a>
               <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📷 Instagram</a>
@@ -1252,27 +1325,27 @@ const SearchPage: React.FC = () => {
           </div>
           
           <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>🔍 Hızlı Erişim</h4>
+            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>🔍 Quick Access</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🏠 Ana Sayfa</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🔍 Otel Ara</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>📋 Rezervasyonlarım</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>⭐ Favorilerim</a></li>
+              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🏠 Home Page</a></li>
+              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🔍 Search Hotels</a></li>
+              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>📋 My Reservations</a></li>
+              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>⭐ My favorites</a></li>
             </ul>
           </div>
           
           <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>📞 İletişim</h4>
+            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>📞 Contact</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '10px', color: 'white' }}>📧 info@hotelres.com</li>
               <li style={{ marginBottom: '10px', color: 'white' }}>📱 +90 212 555 0123</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📍 İstanbul, Türkiye</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>🕒 7/24 Destek</li>
+              <li style={{ marginBottom: '10px', color: 'white' }}>📍 Antalya, Turkey</li>
+              <li style={{ marginBottom: '10px', color: 'white' }}>🕒 7/24 Support</li>
             </ul>
           </div>
           
           <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Ödeme Yöntemleri</h4>
+            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Payment Methods</h4>
             <div className="payment-methods" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 Visa</span>
               <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 MasterCard</span>
@@ -1283,11 +1356,11 @@ const SearchPage: React.FC = () => {
         </div>
         
         <div className="footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '30px', paddingTop: '20px', textAlign: 'center' }}>
-          <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)' }}>&copy; 2024 HotelRes. Tüm hakları saklıdır.</p>
+          <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)' }}>&copy; 2025 HotelRes. All rights reserved.</p>
           <div className="footer-bottom-links" style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Gizlilik Politikası</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Kullanım Şartları</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Çerez Politikası</a>
+            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Privacy Policy</a>
+            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Terms of Use</a>
+            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Cookie Policy</a>
           </div>
         </div>
       </footer>

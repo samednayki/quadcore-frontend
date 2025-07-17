@@ -8,11 +8,11 @@ html, body {
 /* Animated Intro Section Styles */
 .animated-intro-section {
   text-align: center;
-  margin-bottom: 1rem;
-  height: 80px;
-  overflow: visible;
+  margin-bottom: 1em;
+  height:80px; overflow: visible;
   position: relative;
   width: 100%;
+  min-width: 1200px;
 }
 
 .animated-text-container {
@@ -31,13 +31,13 @@ html, body {
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   opacity: 0;
   transform: translateY(20px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.8s cubic-bezier(0.4, 0.2, 1);
   white-space: nowrap;
   overflow: visible;
   text-overflow: clip;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-  width: 100%;
   text-align: center;
+  line-height: 1.2;
 }
 
 /* Modern gradient renkler */
@@ -245,6 +245,24 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+.search-error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.search-error-message .error-icon {
+  font-size: 1.1rem;
 }
 
 .search-title-v2 {
