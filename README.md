@@ -1,1 +1,1 @@
-# quadcore-frontend2
+# quadcore-frontend
