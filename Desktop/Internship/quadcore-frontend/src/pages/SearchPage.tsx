@@ -590,6 +590,9 @@ const SearchPage: React.FC = () => {
       }))
     };
 
+    // Store last search params in localStorage
+    localStorage.setItem('lastHotelSearchParams', JSON.stringify(searchParams));
+
     // Navigate to hotel list with search parameters
     navigate('/hotels', { 
       state: { searchParams } 
@@ -646,7 +649,26 @@ const SearchPage: React.FC = () => {
           </div>
           <nav className="nav-links">
             <a href="#" className="nav-link nav-box">{FaHome({ className: "nav-icon" })}<span className="nav-text">Home</span></a>
-            <a href="#" className="nav-link nav-box">{FaSearch({ className: "nav-icon" })}<span className="nav-text">Search Hotels</span></a>
+            <a
+              href="#"
+              className="nav-link nav-box"
+              onClick={e => {
+                e.preventDefault();
+                const lastParams = localStorage.getItem('lastHotelSearchParams');
+                if (lastParams) {
+                  try {
+                    const parsed = JSON.parse(lastParams);
+                    navigate('/hotels', { state: { searchParams: parsed } });
+                  } catch {
+                    navigate('/');
+                  }
+                } else {
+                  navigate('/');
+                }
+              }}
+            >
+              {FaSearch({ className: "nav-icon" })}<span className="nav-text">Search Hotels</span>
+            </a>
             <a href="#" className="nav-link nav-box">{FaBookmark({ className: "nav-icon" })}<span className="nav-text">My Reservations</span></a>
           </nav>
         </header>

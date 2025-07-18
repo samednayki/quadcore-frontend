@@ -39,6 +39,8 @@ interface Hotel {
     night: number;
     offerId: string;
     available: boolean;
+    productType: number;
+    productId: string;
   }>;
   description?: {
     text: string;
@@ -71,6 +73,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   const searchParams = propSearchParams || location.state?.searchParams;
   
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [searchId, setSearchId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'price' | 'rating' | 'stars'>('price');
@@ -175,10 +178,17 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
         
         try {
           const data = JSON.parse(responseText);
-          console.log('PriceSearch Response:', data);
-          
+          console.log('PriceSearch Response:', data); // DEBUG
           if (data.body && data.body.hotels) {
             setHotels(data.body.hotels);
+            let extractedSearchId = '';
+            if (data.body && data.body.searchId) {
+              extractedSearchId = data.body.searchId;
+            } else if (data.searchId) {
+              extractedSearchId = data.searchId;
+            }
+            setSearchId(extractedSearchId || '');
+            console.log('Extracted searchId:', extractedSearchId); // DEBUG
           } else {
             console.log('No hotels in response body:', data);
             setError('No hotels found in response');
@@ -328,7 +338,24 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             <a href="#" className="nav-btn">
               {FaHome({ style: { marginRight: 8, fontSize: 20 } })} Home
             </a>
-            <a href="#" className="nav-btn">
+            <a
+              href="#"
+              className="nav-btn"
+              onClick={e => {
+                e.preventDefault();
+                const lastParams = localStorage.getItem('lastHotelSearchParams');
+                if (lastParams) {
+                  try {
+                    const parsed = JSON.parse(lastParams);
+                    navigate('/hotels', { state: { searchParams: parsed } });
+                  } catch {
+                    navigate('/');
+                  }
+                } else {
+                  navigate('/');
+                }
+              }}
+            >
               {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
             </a>
             <a href="#" className="nav-btn">
@@ -599,7 +626,24 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                                 </div>
                               )}
                             </div>
-                            <button className="book-btn">Book Now</button>
+                            {/* See Details Button */}
+                            {bestOffer ? (
+                              <button
+                                className="see-details-btn"
+                                onClick={() => {
+                                  console.log('Navigating with searchId:', searchId); // DEBUG
+                                  navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}`);
+                                }}
+                                style={{ marginTop: 12, width: '100%', background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', opacity: bestOffer.available ? 1 : 0.5 }}
+                                disabled={!bestOffer.available}
+                              >
+                                See Details
+                              </button>
+                            ) : (
+                              <button className="see-details-btn" disabled style={{ marginTop: 12, width: '100%', background: '#d1d5db', color: '#64748b', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'not-allowed', opacity: 0.7 }}>
+                                No Offer Available
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
