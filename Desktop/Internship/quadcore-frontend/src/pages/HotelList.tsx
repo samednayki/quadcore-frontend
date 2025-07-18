@@ -45,6 +45,7 @@ interface Hotel {
   description?: {
     text: string;
   };
+  ownerProvider?: string;
 }
 
 interface RoomDetail {
@@ -632,7 +633,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                                 className="see-details-btn"
                                 onClick={() => {
                                   console.log('Navigating with searchId:', searchId); // DEBUG
-                                  navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}`);
+                                  const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
+                                  navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
                                 }}
                                 style={{ marginTop: 12, width: '100%', background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', opacity: bestOffer.available ? 1 : 0.5 }}
                                 disabled={!bestOffer.available}
