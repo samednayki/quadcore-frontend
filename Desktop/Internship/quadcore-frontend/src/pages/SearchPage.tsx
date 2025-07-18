@@ -835,13 +835,6 @@ const SearchPage: React.FC = () => {
                         disabled={!selectedDestination || loadingCheckIn}
                         onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
                       />
-                      <button 
-                        type="button"
-                        className="calendar-toggle-btn"
-                        onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
-                      >
-                        📅
-                      </button>
                     </div>
                     
                     {showCheckInCalendar && (
@@ -943,14 +936,6 @@ const SearchPage: React.FC = () => {
                         disabled={!selectedCheckInDate}
                         onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
                       />
-                      <button
-                        type="button"
-                        className="calendar-toggle-btn"
-                        disabled={!selectedCheckInDate}
-                        onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
-                      >
-                        📅
-                      </button>
                     </div>
                     {showCheckOutCalendar && (
                       <div className="calendar-widget">
