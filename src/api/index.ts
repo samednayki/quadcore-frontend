@@ -38,3 +38,30 @@ export async function getOffers({
   if (!response.ok) throw new Error("Teklif detayları alınamadı");
   return response.json();
 }
+
+export async function getOfferDetails({
+  token,
+  offerIds,
+  currency,
+  getProductInfo = false
+}: {
+  token: string;
+  offerIds: string[];
+  currency: string;
+  getProductInfo?: boolean;
+}) {
+  const response = await fetch("http://localhost:8080/api/getofferdetails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      offerIds,
+      currency,
+      getProductInfo
+    })
+  });
+  if (!response.ok) throw new Error("Offer details could not be fetched");
+  return response.json();
+}

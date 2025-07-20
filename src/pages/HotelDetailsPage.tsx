@@ -78,6 +78,11 @@ const HotelDetailsPage: React.FC = () => {
   // Favorite state
   const [isFavorite, setIsFavorite] = useState(false);
   const [heartAnimate, setHeartAnimate] = useState(false);
+  
+  // Offer Details Modal State
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [offerDetail, setOfferDetail] = useState<any>(null);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -248,6 +253,49 @@ const HotelDetailsPage: React.FC = () => {
     setHeartAnimate(true);
     setTimeout(() => setHeartAnimate(false), 350);
   };
+
+  // Offer Details Modal functions
+  const showOfferDetailsModal = async (offer: any) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Authentication required');
+        return;
+      }
+      
+      // Import the function
+      const { getOfferDetails } = await import('../api');
+      
+      // Fetch offer details
+      const response = await getOfferDetails({
+        token,
+        offerIds: [offer.offerId],
+        currency: offer.price.currency,
+        getProductInfo: false
+      });
+      
+      console.log('Offer Details Response:', response);
+      
+      if (response.body && response.body.offerDetails && response.body.offerDetails.length > 0) {
+        const offerDetail = response.body.offerDetails[0];
+        setOfferDetail(offerDetail);
+        setSelectedOffer(offer);
+        setShowOfferModal(true);
+      } else {
+        alert('No offer details found');
+      }
+      
+    } catch (error) {
+      console.error('Error fetching offer details:', error);
+      alert('Failed to fetch offer details');
+    }
+  };
+
+  const closeOfferDetailsModal = () => {
+    setShowOfferModal(false);
+    setOfferDetail(null);
+    setSelectedOffer(null);
+  };
   // Lightbox ESC close
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -259,6 +307,27 @@ const HotelDetailsPage: React.FC = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [lightboxOpen, images.length]);
+
+  // Offer Modal ESC close and body scroll prevention
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showOfferModal) {
+        closeOfferDetailsModal();
+      }
+    };
+    
+    if (showOfferModal) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', onKey);
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showOfferModal]);
 
   const logoUrl = process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg';
 
@@ -864,9 +933,40 @@ const HotelDetailsPage: React.FC = () => {
                     {offer.rooms?.[0]?.roomName && <li>{offer.rooms[0].roomName}</li>}
                   </ul>
                 </div>
+                {/* See Details of Offer Button */}
+                <button 
+                  onClick={() => showOfferDetailsModal(offer)}
+                  style={{
+                    marginTop: 8,
+                    background: 'linear-gradient(90deg, #059669 0%, #16a34a 100%)',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    padding: '12px 0',
+                    border: 'none',
+                    borderRadius: 12,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 12px #05966933',
+                    letterSpacing: 0.5,
+                    transition: 'all 0.18s, transform 0.12s',
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = 'linear-gradient(90deg, #16a34a 0%, #059669 100%)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px #05966944';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = 'linear-gradient(90deg, #059669 0%, #16a34a 100%)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 12px #05966933';
+                  }}
+                >
+                  See Details of Offer
+                </button>
+                
                 {/* Book Now Button */}
                 <button style={{
-                  marginTop: 'auto',
+                  marginTop: 8,
                   background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
                   color: 'white',
                   fontWeight: 900,
@@ -905,6 +1005,356 @@ const HotelDetailsPage: React.FC = () => {
           <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No details found for this section.</div>
         )}
       </section>
+
+      {/* OFFER DETAILS MODAL */}
+      {showOfferModal && offerDetail && selectedOffer && (
+        <div 
+          className="modal-overlay" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeOfferDetailsModal();
+            }
+          }}
+        >
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '24px 24px 0 24px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1f2937' }}>
+                  Offer Details
+                </h2>
+                <p style={{ margin: '8px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
+                  {hotel?.name}
+                </p>
+              </div>
+              <button
+                onClick={closeOfferDetailsModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px' }}>
+              {/* Hotel Info */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                marginBottom: '24px',
+                padding: '16px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px'
+              }}>
+                <img
+                  src={hotel?.seasons?.[0]?.mediaFiles?.[0]?.urlFull || hotel?.thumbnailFull || process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg'}
+                  alt={hotel?.name}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600 }}>
+                    {hotel?.name}
+                  </h3>
+                  <p style={{ margin: '0 0 4px 0', color: '#6b7280', fontSize: '14px' }}>
+                    📍 {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || 'Unknown location'}
+                    {hotel?.country?.name && `, ${hotel.country.name}`}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    {hotel?.stars && renderStars(hotel.stars)}
+                    {hotel?.stars && <span style={{ color: '#6b7280', fontSize: '14px' }}>
+                      ({hotel.stars} stars)
+                    </span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Offer Details Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                {/* Left Column */}
+                <div>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                    📅 Stay Information
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Check-in:</span>
+                      <span style={{ fontWeight: 500 }}>
+                        {new Date(offerDetail.checkIn).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Check-out:</span>
+                      <span style={{ fontWeight: 500 }}>
+                        {new Date(offerDetail.checkOut).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Nights:</span>
+                      <span style={{ fontWeight: 500 }}>
+                        {Math.ceil((new Date(offerDetail.checkOut).getTime() - new Date(offerDetail.checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Availability:</span>
+                      <span style={{ fontWeight: 500, color: offerDetail.availability > 0 ? '#059669' : '#dc2626' }}>
+                        {offerDetail.availability} room{offerDetail.availability !== 1 ? 's' : ''} available
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Expires on:</span>
+                      <span style={{ fontWeight: 500, color: '#dc2626' }}>
+                        {new Date(offerDetail.expiresOn).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                    💰 Pricing Information
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{
+                      padding: '16px',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      border: '2px solid #0ea5e9'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ color: '#0c4a6e', fontWeight: 600 }}>Total Price:</span>
+                        <span style={{ fontSize: '20px', fontWeight: 700, color: '#0c4a6e' }}>
+                          {offerDetail.price.currency} {offerDetail.price.amount}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#0369a1' }}>
+                        {offerDetail.price.currency} {(offerDetail.price.amount / Math.ceil((new Date(offerDetail.checkOut).getTime() - new Date(offerDetail.checkIn).getTime()) / (1000 * 60 * 60 * 24))).toFixed(2)} per night
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Refundable:</span>
+                      <span style={{ fontWeight: 500, color: offerDetail.isRefundable ? '#059669' : '#dc2626' }}>
+                        {offerDetail.isRefundable ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Special Offer:</span>
+                      <span style={{ fontWeight: 500, color: offerDetail.isSpecial ? '#f59e0b' : '#6b7280' }}>
+                        {offerDetail.isSpecial ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6b7280' }}>Available:</span>
+                      <span style={{ fontWeight: 500, color: offerDetail.isAvailable ? '#059669' : '#dc2626' }}>
+                        {offerDetail.isAvailable ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Breakdown */}
+              {offerDetail.priceBreakdowns && offerDetail.priceBreakdowns.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                    📊 Daily Price Breakdown
+                  </h4>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '12px'
+                  }}>
+                    {offerDetail.priceBreakdowns.map((breakdown: any, index: number) => (
+                      <div key={index} style={{
+                        padding: '12px',
+                        backgroundColor: '#f9fafb',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>
+                          {new Date(breakdown.date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div style={{ fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                          {breakdown.price.currency} {breakdown.price.amount}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cancellation Policies */}
+              {offerDetail.cancellationPolicies && offerDetail.cancellationPolicies.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                    🚫 Cancellation Policy
+                  </h4>
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#fef2f2',
+                    borderRadius: '8px',
+                    border: '1px solid #fecaca'
+                  }}>
+                    {offerDetail.cancellationPolicies.map((policy: any, index: number) => (
+                      <div key={index} style={{ marginBottom: index < offerDetail.cancellationPolicies.length - 1 ? '12px' : 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ color: '#991b1b', fontWeight: 500 }}>Room {policy.roomNumber}:</span>
+                          <span style={{ color: '#991b1b', fontWeight: 500 }}>
+                            {policy.price.currency} {policy.price.amount}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '14px', color: '#7f1d1d' }}>
+                          Due: {new Date(policy.dueDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {offerDetail.notes && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 600, color: '#374151' }}>
+                    📝 Important Notes
+                  </h4>
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#fef3c7',
+                    borderRadius: '8px',
+                    border: '1px solid #fde68a',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    color: '#92400e',
+                    maxHeight: '200px',
+                    overflow: 'auto'
+                  }}>
+                    {offerDetail.notes}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-end',
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '24px'
+              }}>
+                <button
+                  onClick={closeOfferDetailsModal}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    closeOfferDetailsModal();
+                    // Navigate to booking page or show booking form
+                    alert('Booking functionality will be implemented here');
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                >
+                  Book This Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
         {/* Footer */}
         <footer className="footer" style={{ marginTop: '50px', backgroundColor: '#1e3a8a', color: 'white', padding: '40px 0 20px 0' }}>
           <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>

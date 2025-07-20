@@ -80,6 +80,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   const [sortBy, setSortBy] = useState<'price' | 'rating' | 'stars'>('price');
   const [filterStars, setFilterStars] = useState<number[]>([]);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 10000 });
+  
+
 
   useEffect(() => {
     if (searchParams) {
@@ -89,6 +91,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       navigate('/', { replace: true });
     }
   }, [searchParams, navigate]);
+
+
 
   const fetchHotels = async () => {
     if (!searchParams) return;
@@ -230,6 +234,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
     if (name.includes('bed') || name.includes('room')) return '🛏️';
     return '💳';
   };
+
+
 
   const renderStars = (stars: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -627,7 +633,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                                 </div>
                               )}
                             </div>
-                            {/* See Details Button */}
+                            {/* See Details of Offer Button */}
                             {bestOffer ? (
                               <button
                                 className="see-details-btn"
@@ -636,16 +642,18 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                                   const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
                                   navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
                                 }}
-                                style={{ marginTop: 12, width: '100%', background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', opacity: bestOffer.available ? 1 : 0.5 }}
+                                style={{ marginTop: 8, width: '100%', background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', opacity: bestOffer.available ? 1 : 0.5 }}
                                 disabled={!bestOffer.available}
                               >
                                 See Details
                               </button>
                             ) : (
-                              <button className="see-details-btn" disabled style={{ marginTop: 12, width: '100%', background: '#d1d5db', color: '#64748b', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'not-allowed', opacity: 0.7 }}>
+                              <button className="see-details-btn" disabled style={{ marginTop: 8, width: '100%', background: '#d1d5db', color: '#64748b', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'not-allowed', opacity: 0.7 }}>
                                 No Offer Available
                               </button>
                             )}
+                            
+
                           </div>
                         </div>
                       </div>
@@ -657,6 +665,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
           </div>
         </div>
       </main>
+
+
 
       {/* FOOTER */}
       <footer className="footer" style={{ 

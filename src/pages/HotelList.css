@@ -463,3 +463,98 @@ body {
     gap: 18px;
   }
 }
+
+/* Offer Details Modal Styles */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal scrollbar styling */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw;
+    margin: 10px;
+  }
+  
+  .modal-content > div {
+    padding: 16px;
+  }
+  
+  .modal-content h2 {
+    font-size: 20px;
+  }
+  
+  .modal-content h4 {
+    font-size: 14px;
+  }
+  
+  /* Grid layout for mobile */
+  .modal-content > div > div:nth-child(2) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  /* Price breakdown grid for mobile */
+  .modal-content > div > div:nth-child(2) > div:nth-child(3) > div {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+/* Button hover effects */
+.see-offer-details-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #05966944 !important;
+}
+
+.see-offer-details-btn:active {
+  transform: translateY(0);
+}
+
+/* Loading state for button */
+.see-offer-details-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
