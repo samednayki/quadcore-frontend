@@ -538,3 +538,36 @@ export async function setReservationInfo({
   if (!response.ok) throw new Error("Rezervasyon bilgisi kaydedilemedi");
   return response.json();
 }
+
+// CommitTransaction Types
+export interface CommitTransactionRequest {
+  transactionId: string;
+}
+
+export interface CommitTransactionResponse {
+  body: {
+    reservationNumber: string;
+    encryptedReservationNumber: string;
+    transactionId: string;
+  };
+  header: any;
+}
+
+export async function commitTransaction({
+  token,
+  data
+}: {
+  token: string;
+  data: CommitTransactionRequest;
+}): Promise<CommitTransactionResponse> {
+  const response = await fetch("http://localhost:8080/api/committransaction", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error("Rezervasyon tamamlanamadı");
+  return response.json();
+}
