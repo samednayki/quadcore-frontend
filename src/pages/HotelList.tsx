@@ -373,14 +373,15 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       </header>
 
       {/* MAIN CONTENT */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
         <div className="hotel-list-container" style={{ 
-          background: 'rgba(255,255,255,0.92)', 
-          borderRadius: 18, 
-          boxShadow: '0 4px 24px rgba(80,80,160,0.10)', 
+          background: '#fff', 
+          borderRadius: 0, 
+          boxShadow: 'none', 
           margin: '0 auto', 
           maxWidth: 1400, 
-          padding: '32px 0'
+          padding: '32px 0',
+          border: 'none'
         }}>
           {/* Header */}
           <div className="hotel-list-header">
@@ -424,9 +425,21 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             </div>
           </div>
 
-          <div className="hotel-list-content">
+          <div className="hotel-list-content" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0 }}>
             {/* Filters Sidebar */}
-            <div className="filters-sidebar">
+            <div className="filters-sidebar" style={{
+              background: '#fff',
+              border: '1.5px solid #e5e7eb',
+              borderRadius: 18,
+              boxShadow: 'none',
+              padding: '32px 24px',
+              minWidth: 220,
+              marginRight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              height: '100%'
+            }}>
               <h3>🔍 Filters</h3>
               
               {/* Star Rating Filter */}
@@ -483,9 +496,10 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                 </div>
               </div>
             </div>
-
+            {/* Sidebar ile otel listesi arasında ince çizgi */}
+            <div style={{ width: 2, background: '#e5e7eb', minHeight: '100%', margin: '0 32px' }}></div>
             {/* Hotels List */}
-            <div className="hotels-grid">
+            <div className="hotels-grid" style={{ background: '#fff', boxShadow: 'none', border: 'none', flex: 1 }}>
               {filteredAndSortedHotels.length === 0 ? (
                 <div className="no-hotels">
                   <div className="no-hotels-icon">🏨</div>
@@ -497,7 +511,27 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                   const bestOffer = getBestOffer(hotel);
                   
                   return (
-                    <div key={hotel.id} className="hotel-card">
+                    <div key={hotel.id} className="hotel-card" 
+                      style={{
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'stretch',
+                        background: '#fff',
+                        border: '1.5px solid #e5e7eb',
+                        boxShadow: '0 2px 12px rgba(80,80,160,0.07)',
+                        borderRadius: 22,
+                        marginBottom: 32,
+                        padding: '40px 40px 40px 40px',
+                        minHeight: 220
+                      }}
+                      onClick={() => {
+                        if (bestOffer) {
+                          const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
+                          navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
+                        }
+                      }}
+                    >
                       {/* Hotel Image */}
                       <div className="hotel-image">
                         <img 
@@ -516,145 +550,111 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                           </button>
                         </div>
                       </div>
-
-                      {/* Hotel Info */}
-                      <div className="hotel-info">
-                        <div className="hotel-header">
-                          <h3 className="hotel-name">{hotel.name}</h3>
-                        </div>
-
-                        <div className="hotel-location">
-                          📍
-                          <span>
-                            {hotel.city?.name || hotel.location?.name || 'Unknown location'}
-                            {hotel.country?.name && `, ${hotel.country.name}`}
-                          </span>
-                        </div>
-
-                        {hotel.description?.text && (
-                          <p className="hotel-description">
-                            {hotel.description.text.substring(0, 150)}...
-                          </p>
-                        )}
-
-                        {/* Facilities */}
-                        {hotel.facilities && hotel.facilities.length > 0 && (
-                          <div className="hotel-facilities">
-                            {hotel.facilities.slice(0, 4).map((facility, index) => (
-                              <span key={index} className="facility-tag">
-                                {getFacilityIcon(facility.name)}
-                                {facility.name}
-                              </span>
-                            ))}
-                            {hotel.facilities.length > 4 && (
-                              <span className="facility-more">+{hotel.facilities.length - 4} more</span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* YENİ: Fiyat ve Yıldızlar Yanyana */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
-                          {/* Yıldızlar */}
-                          <div className="hotel-stars">
-                            {Array.from({ length: 5 }, (_, i) => {
-                              const fullStars = Math.floor(hotel.stars);
-                              const hasHalfStar = hotel.stars % 1 >= 0.5;
-                              // SVG yıldız path'i
-                              const starSvg = (fill: string) => (
-                                <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
-                                </svg>
-                              );
-                              if (i < fullStars) {
-                                // Dolu yıldız
-                                return (
-                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    {starSvg('#fbbf24')}
-                                  </span>
-                                );
-                              } else if (i === fullStars && hasHalfStar) {
-                                // Yarım yıldız
-                                return (
-                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      {/* Sağdaki içerik ve fiyatı iki sütuna ayır */}
+                      <div style={{ display: 'flex', flex: 1, flexDirection: 'row', alignItems: 'stretch' }}>
+                        {/* Sol ana içerik */}
+                        <div style={{ flex: 3, padding: '32px 32px 32px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                          {/* Hotel Info */}
+                          <div className="hotel-header" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <h3 className="hotel-name" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', margin: 0, marginBottom: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                              {hotel.name}
+                              <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18, marginLeft: 8 }}>
+                                {Array.from({ length: 5 }, (_, i) => {
+                                  const fullStars = Math.floor(hotel.stars);
+                                  const hasHalfStar = hotel.stars % 1 >= 0.5;
+                                  // SVG yıldız path'i
+                                  const starSvg = (fill: string) => (
                                     <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                      <defs>
-                                        <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
-                                          <stop offset="50%" stopColor="#fbbf24"/>
-                                          <stop offset="50%" stopColor="#d1d5db"/>
-                                        </linearGradient>
-                                      </defs>
-                                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
                                     </svg>
-                                  </span>
-                                );
-                              } else {
-                                // Boş yıldız
-                                return (
-                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    {starSvg('#d1d5db')}
-                                  </span>
-                                );
-                              }
-                            })}
-                            <span className="star-count" style={{ marginLeft: 4 }}>({hotel.stars})</span>
-                          </div>
-                          {/* Rating biraz aşağıda, kart yüksekliği için margin/padding artırıldı */}
-                          <div style={{ fontWeight: 500, color: '#64748b', fontSize: '0.98rem', lineHeight: 1, marginTop: 12, marginBottom: 4 }}>
-                            Rating: {hotel.rating}
-                          </div>
-                          {/* Fiyat ve Book Now */}
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                            {/* Price Box */}
-                            <div style={{ background: 'rgba(30, 58, 138, 0.06)', borderRadius: 10, padding: '12px 18px', marginBottom: 6, minWidth: 140, boxShadow: '0 2px 8px rgba(30,58,138,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                              {bestOffer ? (
-                                <div className="price-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                  <div className="price-main">
-                                    <span className="price-amount">
-                                      {bestOffer.price.currency} {bestOffer.price.amount}
-                                    </span>
-                                    <span className="price-per-night" style={{ marginLeft: 8 }}>
-                                      per {bestOffer.night} night{bestOffer.night !== 1 ? 's' : ''}
-                                    </span>
-                                  </div>
-                                  {bestOffer.price.percent < 0 && (
-                                    <div className="price-discount" style={{ marginTop: 4 }}>
-                                      <span className="old-price">
-                                        {bestOffer.price.currency} {bestOffer.price.oldAmount}
+                                  );
+                                  if (i < fullStars) {
+                                    // Dolu yıldız
+                                    return (
+                                      <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                        {starSvg('#fbbf24')}
                                       </span>
-                                      <span className="discount-percent">
-                                        {Math.abs(bestOffer.price.percent)}% OFF
+                                    );
+                                  } else if (i === fullStars && hasHalfStar) {
+                                    // Yarım yıldız
+                                    return (
+                                      <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                        <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                          <defs>
+                                            <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                                              <stop offset="50%" stopColor="#fbbf24"/>
+                                              <stop offset="50%" stopColor="#d1d5db"/>
+                                            </linearGradient>
+                                          </defs>
+                                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                                        </svg>
                                       </span>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="no-availability">
-                                  <span>No availability</span>
-                                </div>
+                                    );
+                                  } else {
+                                    // Boş yıldız
+                                    return (
+                                      <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                        {starSvg('#d1d5db')}
+                                      </span>
+                                    );
+                                  }
+                                })}
+                              </span>
+                            </h3>
+                          </div>
+
+                          <div className="hotel-location">
+                            📍
+                            <span>
+                              {hotel.city?.name && <span>{hotel.city.name}</span>}
+                              {hotel.country?.name && <span>, {hotel.country.name}</span>}
+                            </span>
+                          </div>
+
+                          {hotel.description?.text && (
+                            <p className="hotel-description" style={{ maxWidth: '60%', whiteSpace: 'normal', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 18 }}>
+                              {hotel.description.text.substring(0, 150)}...
+                            </p>
+                          )}
+
+                          {/* Facilities */}
+                          {hotel.facilities && hotel.facilities.length > 0 && (
+                            <div className="hotel-facilities">
+                              {hotel.facilities.slice(0, 4).map((facility, index) => (
+                                <span key={index} className="facility-tag">
+                                  {getFacilityIcon(facility.name)}
+                                  {facility.name}
+                                </span>
+                              ))}
+                              {hotel.facilities.length > 4 && (
+                                <span className="facility-more">+{hotel.facilities.length - 4} more</span>
                               )}
                             </div>
-                            {/* See Details of Offer Button */}
-                            {bestOffer ? (
-                              <button
-                                className="see-details-btn"
-                                onClick={() => {
-                                  console.log('Navigating with searchId:', searchId); // DEBUG
-                                  const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
-                                  navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
-                                }}
-                                style={{ marginTop: 8, width: '100%', background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', opacity: bestOffer.available ? 1 : 0.5 }}
-                                disabled={!bestOffer.available}
-                              >
-                                See Details
-                              </button>
-                            ) : (
-                              <button className="see-details-btn" disabled style={{ marginTop: 8, width: '100%', background: '#d1d5db', color: '#64748b', fontWeight: 700, borderRadius: 8, padding: '10px 0', fontSize: 16, border: 'none', cursor: 'not-allowed', opacity: 0.7 }}>
-                                No Offer Available
-                              </button>
-                            )}
-                            
+                          )}
 
+                          {/* YENİ: Fiyat ve Yıldızlar Yanyana */}
+                          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 12 }}>
+                            <div style={{ fontWeight: 500, color: '#64748b', fontSize: '0.98rem', lineHeight: 1, marginTop: 12, marginBottom: 4 }}>
+                              Rating: {hotel.rating}
+                            </div>
                           </div>
+                        </div>
+                        {/* Sağ fiyat sütunu */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: 180 }}>
+                          {bestOffer ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                              <span style={{ fontSize: '2.2rem', fontWeight: 900, color: '#181818', lineHeight: 1, marginBottom: 0, textAlign: 'center' }}>
+                                {bestOffer.price.currency} {bestOffer.price.amount}
+                              </span>
+                              <span style={{ fontSize: '0.98rem', color: '#64748b', fontWeight: 500, opacity: 0.7, marginTop: 2, textAlign: 'center' }}>
+                                /per {bestOffer.night} night{bestOffer.night !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="no-availability">
+                              <span>No availability</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -669,57 +669,56 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
 
 
       {/* FOOTER */}
-      <footer className="footer" style={{ 
+      <footer className="footer" style={{
         marginTop: 'auto',
-        backgroundColor: '#1e3a8a', 
-        color: 'white', 
-        padding: '40px 0 20px 0',
-        width: '100%'
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        color: 'white',
+        padding: '3.5rem 0 1.5rem 0',
+        width: '100%',
+        border: 'none',
+        boxShadow: 'none',
+        position: 'relative',
+        overflow: 'hidden',
+        zIndex: 1
       }}>
-        <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h3 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.5rem' }}>🏨 HotelRes</h3>
-            <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>En iyi otel deneyimi için güvenilir partneriniz</p>
-            <div className="social-links" style={{ display: 'flex', gap: '15px' }}>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📘 Facebook</a>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📷 Instagram</a>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>🐦 Twitter</a>
-            </div>
+        <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2.5rem', position: 'relative', zIndex: 3 }}>
+          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontWeight: 600, fontSize: '1.08rem', marginBottom: 8 }}>Your trusted partner for the best hotel experience</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Facebook</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Instagram</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>Twitter</div>
           </div>
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>🔍 Hızlı Erişim</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🏠 Ana Sayfa</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🔍 Otel Ara</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>📋 Rezervasyonlarım</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>⭐ Favorilerim</a></li>
-            </ul>
+          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Quick Access</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Home Page</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Search Hotels</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>My Reservations</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>My favorites</div>
           </div>
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>📞 İletişim</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📧 info@hotelres.com</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>�� +90 212 555 0123</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📍 İstanbul, Türkiye</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>🕒 7/24 Destek</li>
-            </ul>
+          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Contact</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>info@hotelres.com</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>+90 212 555 0123</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Antalya, Turkey</div>
+            <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>7/24 Support</div>
           </div>
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Ödeme Yöntemleri</h4>
-            <div className="payment-methods" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 Visa</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 MasterCard</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 PayPal</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>🏦 Bank Transfer</span>
+          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Payment Methods</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>Visa</span>
+              <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>MasterCard</span>
+              <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>PayPal</span>
+              <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>Bank Transfer</span>
             </div>
           </div>
         </div>
-        <div className="footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '30px', paddingTop: '20px', textAlign: 'center' }}>
-          <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)' }}>&copy; 2024 HotelRes. Tüm hakları saklıdır.</p>
-          <div className="footer-bottom-links" style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Gizlilik Politikası</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Kullanım Şartları</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Çerez Politikası</a>
+        <div style={{ borderTop: '1px solid #2d3250', margin: '2.5rem 0 0 0', width: '100%' }}></div>
+        <div className="footer-bottom" style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.2rem 2rem 0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1, color: '#b0b0b0', fontSize: '1rem' }}>
+          <span>© 2025 HotelRes. All rights reserved.</span>
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Privacy Policy</a>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Terms of Use</a>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Cookie Policy</a>
           </div>
         </div>
       </footer>
