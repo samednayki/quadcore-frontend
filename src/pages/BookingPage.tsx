@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark, FaArrowLeft } from 'react-icons/fa';
+import { setReservationInfo } from '../api';
 
 const BookingPage: React.FC = () => {
   const location = useLocation();
@@ -62,10 +63,60 @@ const BookingPage: React.FC = () => {
         return;
       }
 
-      // Here you would typically call the SetReservationInfo API
-      // For now, we'll just show a success message
-      alert('Booking information submitted successfully!');
-      
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token not found');
+        setLoading(false);
+        return;
+      }
+
+      // Traveller objelerini backend modeline uygun hale getir
+      const mappedTravellers = travellers.map((t) => ({
+        ...t,
+        nationality: { twoLetterCode: t.nationality },
+        passportInfo: {
+          number: t.passportNumber,
+          expireDate: t.passportExpiry,
+        },
+        address: {
+          email: t.email,
+          phone: t.phone,
+          // diğer alanlar backend modeline göre eklenebilir
+        },
+      }));
+
+      // CustomerInfo'yu örnekle (geliştirilebilir)
+      const customerInfo = {
+        isCompany: false,
+        passportInfo: {},
+        address: {
+          city: { name: 'Antalya' },
+          country: { name: 'Turkey' },
+          email: travellers[0]?.email || '',
+          phone: travellers[0]?.phone || '',
+          address: 'Customer test',
+          zipCode: '07000',
+        },
+        taxInfo: {},
+        title: 1,
+        name: travellers[0]?.name || '',
+        surname: travellers[0]?.surname || '',
+        birthDate: travellers[0]?.birthDate || '',
+        identityNumber: '11111111111',
+      };
+
+      const data = {
+        transactionId: transactionData.transactionId,
+        travellers: mappedTravellers,
+        customerInfo,
+        reservationNote: 'Reservation note',
+        agencyReservationNumber: 'Agency reservation number text',
+      };
+
+      const response = await setReservationInfo({ token, data });
+      alert('Booking completed!');
+      // İstersen başarılı olunca yönlendirme ekle:
+      // navigate('/success');
     } catch (err) {
       setError('Failed to submit booking information.');
     } finally {
