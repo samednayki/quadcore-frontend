@@ -466,3 +466,108 @@ export async function beginTransaction({
     throw new Error(`JSON parse hatası: ${errorMessage}`);
   }
 }
+
+// SetReservationInfo Types
+export interface SetReservationInfoRequest {
+  transactionId: string;
+  agencyReservationNumber?: string;
+  reservationNote?: string;
+  customerInfo: CustomerInfo;
+  travellers: Traveller[];
+}
+
+export interface CustomerInfo {
+  isCompany: boolean;
+  passportInfo: PassportInfo;
+  address: Address;
+  taxInfo: TaxInfo;
+  title: number;
+  name: string;
+  surname: string;
+  birthDate: string;
+  identityNumber: string;
+  updateIfExists?: boolean;
+  updateOnlyNullFields?: boolean;
+  isDefault?: boolean;
+  id?: string;
+}
+
+export interface PassportInfo {
+  serial?: string;
+  number?: string;
+  expireDate?: string;
+  issueDate?: string;
+  citizenshipCountryCode?: string;
+}
+
+export interface Address {
+  phone?: string;
+  email?: string;
+  address?: string;
+  zipCode?: string;
+  city?: any;
+  country?: any;
+  addressLines?: string[];
+}
+
+export interface TaxInfo {
+  taxOffice?: string;
+  taxNumber?: string;
+}
+
+export interface SetReservationInfoResponse {
+  body: any;
+  header: any;
+}
+
+export async function setReservationInfo({
+  token,
+  data
+}: {
+  token: string;
+  data: SetReservationInfoRequest;
+}): Promise<SetReservationInfoResponse> {
+  const response = await fetch("http://localhost:8080/api/setreservationinfo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error("Rezervasyon bilgisi kaydedilemedi");
+  return response.json();
+}
+
+// CommitTransaction Types
+export interface CommitTransactionRequest {
+  transactionId: string;
+}
+
+export interface CommitTransactionResponse {
+  body: {
+    reservationNumber: string;
+    encryptedReservationNumber: string;
+    transactionId: string;
+  };
+  header: any;
+}
+
+export async function commitTransaction({
+  token,
+  data
+}: {
+  token: string;
+  data: CommitTransactionRequest;
+}): Promise<CommitTransactionResponse> {
+  const response = await fetch("http://localhost:8080/api/committransaction", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error("Rezervasyon tamamlanamadı");
+  return response.json();
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark, FaArrowLeft } from 'react-icons/fa';
+import { setReservationInfo, commitTransaction } from '../api';
 
 const BookingPage: React.FC = () => {
   const location = useLocation();
@@ -9,6 +10,8 @@ const BookingPage: React.FC = () => {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<any[]>([]);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   // Form state for traveller information
   const [travellers, setTravellers] = useState<any[]>([]);
@@ -35,6 +38,45 @@ const BookingPage: React.FC = () => {
     }
   }, [transactionData, hotelData, offerData]);
 
+  const validateTravellers = (travellersToCheck = travellers) => {
+    const newErrors = travellersToCheck.map((traveller) => {
+      const tErrors: any = {};
+      if (!traveller.name || !/^[A-Za-z]+$/.test(traveller.name)) {
+        tErrors.name = 'First name is required and must contain only letters.';
+      }
+      if (!traveller.surname || !/^[A-Za-z]+$/.test(traveller.surname)) {
+        tErrors.surname = 'Last name is required and must contain only letters.';
+      }
+      if (traveller.isLeader && (!traveller.email || !/^[^@]+@[^@]+\.[^@]+$/.test(traveller.email))) {
+        tErrors.email = 'Valid email is required.';
+      }
+      if (traveller.isLeader && (!traveller.phone || !/^[0-9+]{10,15}$/.test(traveller.phone))) {
+        tErrors.phone = 'Phone must be 10-15 digits and can start with +.';
+      }
+      if (!traveller.birthDate) {
+        tErrors.birthDate = 'Birth date is required.';
+      } else if (new Date(traveller.birthDate) >= new Date()) {
+        tErrors.birthDate = 'Birth date must be in the past.';
+      }
+      if (!traveller.nationality || !/^[A-Z]{2}$/.test(traveller.nationality)) {
+        tErrors.nationality = 'Nationality must be 2 uppercase letters.';
+      }
+      if (!traveller.passportNumber || !/^[A-Z0-9]{6,9}$/.test(traveller.passportNumber)) {
+        tErrors.passportNumber = 'Passport number must be 6-9 characters, uppercase letters and/or digits.';
+      }
+      if (!traveller.passportExpiry) {
+        tErrors.passportExpiry = 'Passport expiry date is required.';
+      } else if (new Date(traveller.passportExpiry) <= new Date()) {
+        tErrors.passportExpiry = 'Expiry date must be in the future.';
+      }
+      return tErrors;
+    });
+    setErrors(newErrors);
+    const valid = newErrors.every((tErr) => Object.keys(tErr).length === 0);
+    setIsFormValid(valid);
+    return valid;
+  };
+
   const handleTravellerChange = (index: number, field: string, value: string) => {
     const updatedTravellers = [...travellers];
     updatedTravellers[index] = {
@@ -42,32 +84,90 @@ const BookingPage: React.FC = () => {
       [field]: value
     };
     setTravellers(updatedTravellers);
+    validateTravellers(updatedTravellers);
   };
+
+  // İlk render ve travellers değiştiğinde validasyonu tetikle
+  React.useEffect(() => {
+    validateTravellers(travellers);
+    // eslint-disable-next-line
+  }, [travellers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    if (!validateTravellers()) {
+      setLoading(false);
+      setError('Please fix the errors in the form.');
+      return;
+    }
 
     try {
-      // Validate required fields
-      const requiredFields = ['name', 'surname', 'email', 'birthDate', 'nationality'];
-      const missingFields = travellers.some(traveller => 
-        requiredFields.some(field => !traveller[field])
-      );
-
-      if (missingFields) {
-        setError('Please fill in all required fields for all travellers.');
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Authentication token not found');
         setLoading(false);
         return;
       }
 
-      // Here you would typically call the SetReservationInfo API
-      // For now, we'll just show a success message
-      alert('Booking information submitted successfully!');
-      
+      // Traveller objelerini backend modeline uygun hale getir
+      const mappedTravellers = travellers.map((t) => ({
+        ...t,
+        nationality: { twoLetterCode: t.nationality },
+        passportInfo: {
+          number: t.passportNumber,
+          expireDate: t.passportExpiry,
+        },
+        address: {
+          email: t.email,
+          phone: t.phone,
+        },
+      }));
+
+      // CustomerInfo'yu örnekle (geliştirilebilir)
+      const customerInfo = {
+        isCompany: false,
+        passportInfo: {},
+        address: {
+          city: { name: 'Antalya' },
+          country: { name: 'Turkey' },
+          email: travellers[0]?.email || '',
+          phone: travellers[0]?.phone || '',
+          address: 'Customer test',
+          zipCode: '07000',
+        },
+        taxInfo: {},
+        title: 1,
+        name: travellers[0]?.name || '',
+        surname: travellers[0]?.surname || '',
+        birthDate: travellers[0]?.birthDate || '',
+        identityNumber: '11111111111',
+      };
+
+      const data = {
+        transactionId: transactionData.transactionId,
+        travellers: mappedTravellers,
+        customerInfo,
+        reservationNote: 'Reservation note',
+        agencyReservationNumber: 'Agency reservation number text',
+      };
+
+      // 1. Adım: setReservationInfo
+      const setResResponse = await setReservationInfo({ token, data });
+      const commitTransactionId = setResResponse.body?.transactionId || data.transactionId;
+      if (!commitTransactionId) throw new Error('TransactionId bulunamadı!');
+
+      // 2. Adım: commitTransaction
+      const commitResponse = await commitTransaction({
+        token,
+        data: { transactionId: commitTransactionId }
+      });
+
+      // 3. Adım: Başarı mesajı veya yönlendirme
+      navigate('/booking-success', { state: { reservationNumber: commitResponse.body.reservationNumber } });
     } catch (err) {
-      setError('Failed to submit booking information.');
+      setError('Rezervasyon tamamlanamadı!');
     } finally {
       setLoading(false);
     }
@@ -384,6 +484,7 @@ const BookingPage: React.FC = () => {
                       <option key={title.id} value={title.id}>{title.name}</option>
                     ))}
                   </select>
+                  {errors[index]?.title && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].title}</div>}
                 </div>
 
                 {/* Name */}
@@ -404,6 +505,7 @@ const BookingPage: React.FC = () => {
                     }}
                     required
                   />
+                  {errors[index]?.name && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].name}</div>}
                 </div>
 
                 {/* Surname */}
@@ -424,6 +526,7 @@ const BookingPage: React.FC = () => {
                     }}
                     required
                   />
+                  {errors[index]?.surname && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].surname}</div>}
                 </div>
 
                 {/* Email (only for leader) */}
@@ -445,6 +548,7 @@ const BookingPage: React.FC = () => {
                       }}
                       required
                     />
+                    {errors[index]?.email && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].email}</div>}
                   </div>
                 )}
 
@@ -467,6 +571,7 @@ const BookingPage: React.FC = () => {
                       }}
                       required
                     />
+                    {errors[index]?.phone && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].phone}</div>}
                   </div>
                 )}
 
@@ -488,6 +593,7 @@ const BookingPage: React.FC = () => {
                     }}
                     required
                   />
+                  {errors[index]?.birthDate && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].birthDate}</div>}
                 </div>
 
                 {/* Nationality */}
@@ -509,6 +615,7 @@ const BookingPage: React.FC = () => {
                     }}
                     required
                   />
+                  {errors[index]?.nationality && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].nationality}</div>}
                 </div>
 
                 {/* Passport Number */}
@@ -528,6 +635,7 @@ const BookingPage: React.FC = () => {
                       fontSize: '16px'
                     }}
                   />
+                  {errors[index]?.passportNumber && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].passportNumber}</div>}
                 </div>
 
                 {/* Passport Expiry */}
@@ -547,6 +655,7 @@ const BookingPage: React.FC = () => {
                       fontSize: '16px'
                     }}
                   />
+                  {errors[index]?.passportExpiry && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].passportExpiry}</div>}
                 </div>
               </div>
             </div>
@@ -570,7 +679,7 @@ const BookingPage: React.FC = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !isFormValid}
             style={{
               background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
               color: 'white',
@@ -579,7 +688,7 @@ const BookingPage: React.FC = () => {
               padding: '16px 48px',
               border: 'none',
               borderRadius: 12,
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: loading || !isFormValid ? 'not-allowed' : 'pointer',
               boxShadow: '0 4px 16px #2563eb33',
               letterSpacing: 1,
               transition: 'all 0.2s',

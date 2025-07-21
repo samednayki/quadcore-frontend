@@ -262,20 +262,13 @@ const HotelDetailsPage: React.FC = () => {
         alert('Authentication required');
         return;
       }
-      
-      // Import the function
       const { getOfferDetails } = await import('../api');
-      
-      // Fetch offer details
       const response = await getOfferDetails({
         token,
         offerIds: [offer.offerId],
         currency: offer.price.currency,
         getProductInfo: false
       });
-      
-      console.log('Offer Details Response:', response);
-      
       if (response.body && response.body.offerDetails && response.body.offerDetails.length > 0) {
         const offerDetail = response.body.offerDetails[0];
         setOfferDetail(offerDetail);
@@ -284,10 +277,47 @@ const HotelDetailsPage: React.FC = () => {
       } else {
         alert('No offer details found');
       }
-      
     } catch (error) {
-      console.error('Error fetching offer details:', error);
       alert('Failed to fetch offer details');
+    }
+  };
+
+  // Book This Offer handler (her offer için ayrı loading)
+  
+  const handleBookThisOffer = async (offer: any) => {
+    const offerId = offer.offerId || offer.id || offer.offer_id;
+    if (!offerId) return;
+    setTransactionLoading(prev => ({ ...prev, [offerId]: true }));
+    setTransactionError(prev => ({ ...prev, [offerId]: null }));
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setTransactionError(prev => ({ ...prev, [offerId]: 'Authentication token not found' }));
+        setTransactionLoading(prev => ({ ...prev, [offerId]: false }));
+        return;
+      }
+      const response = await beginTransaction({
+        token,
+        offerIds: [offerId],
+        currency: offer.price?.currency || 'EUR',
+        culture: 'en-US'
+      });
+      if (response.body) {
+        setShowOfferModal(false);
+        navigate('/booking', {
+          state: {
+            transactionData: response.body,
+            hotelData: hotel,
+            offerData: offer
+          }
+        });
+      } else {
+        setTransactionError(prev => ({ ...prev, [offerId]: 'Transaction başlatılamadı' }));
+      }
+    } catch (err) {
+      setTransactionError(prev => ({ ...prev, [offerId]: 'Transaction başlatılamadı' }));
+    } finally {
+      setTransactionLoading(prev => ({ ...prev, [offerId]: false }));
     }
   };
 
@@ -357,14 +387,12 @@ const HotelDetailsPage: React.FC = () => {
   const [offersData, setOffersData] = useState<any>(null);
   
   // BeginTransaction state
-  const [transactionLoading, setTransactionLoading] = useState<{ [key: string]: boolean }>({});
-  const [transactionError, setTransactionError] = useState<string | null>(null);
 
   // Offers API call
-  const fetchOffers = async () => {
+  const fetchOffers = async (): Promise<any> => {
     if (!searchId || !offerId) {
       setOffersError('searchId or offerId missing in URL.');
-      return;
+      return null;
     }
     setOffersLoading(true);
     setOffersError(null);
@@ -374,12 +402,12 @@ const HotelDetailsPage: React.FC = () => {
       if (!token) {
         setOffersError('Authentication token not found');
         setOffersLoading(false);
-        return;
+        return null;
       }
       if (!id) {
         setOffersError('Hotel ID (productId) is missing.');
         setOffersLoading(false);
-        return;
+        return null;
       }
       const data = await getOffers({
         token,
@@ -392,72 +420,100 @@ const HotelDetailsPage: React.FC = () => {
         getRoomInfo: true
       });
       setOffersData(data.body);
+      return data.body;
     } catch (err) {
       setOffersError('Teklif detayları alınamadı.');
+      return null;
     } finally {
       setOffersLoading(false);
     }
   };
 
-  const navigate = useNavigate();
+  // Her offer için ayrı loading ve error state, ayrıca offers olmayan oteller için de kullanılacak
+  const [transactionLoading, setTransactionLoading] = useState<{ [offerId: string]: boolean }>({});
+  const [transactionError, setTransactionError] = useState<{ [offerId: string]: string | null }>({});
+  const [noOfferLoading, setNoOfferLoading] = useState(false);
+  const [noOfferError, setNoOfferError] = useState<string | null>(null);
 
-  // BeginTransaction function
-  const handleBeginTransaction = async (offer: any) => {
+  // Book Now handler for hotels with no offers
+  const navigate = useNavigate();
+  const handleBookNowNoOffers = async () => {
+    setNoOfferLoading(true);
+    setNoOfferError(null);
     try {
-      // Debug: Log the offer object to see its structure
-      console.log('Full offer object:', offer);
-      console.log('Offer keys:', Object.keys(offer));
-      
-      // Get the correct offerId - try different possible fields
-      const offerId = offer.offerId || offer.id || offer.offer_id || offer.offerID;
-      
-      if (!offerId) {
-        console.error('No offerId found in offer:', offer);
-        setTransactionError('Offer ID not found');
-        return;
-      }
-      
-      console.log('Using offerId:', offerId);
-      
-      setTransactionLoading(prev => ({ ...prev, [offerId]: true }));
-      setTransactionError(null);
-      
       const token = localStorage.getItem('authToken');
       if (!token) {
-        setTransactionError('Authentication token not found');
+        setNoOfferError('Authentication token not found');
+        setNoOfferLoading(false);
         return;
       }
-
+      // PriceSearch sonucundaki offerId'yi bul
+      let offerId = null;
+      if (offersData && Array.isArray(offersData.roomInfos) && offersData.roomInfos.length > 0) {
+        // roomInfos içindeki ilk offerId'yi kullan
+        offerId = offersData.roomInfos[0]?.offerId || offersData.roomInfos[0]?.id;
+      }
+      // Eğer offersData yoksa veya offerId bulunamazsa fallback
+      if (!offerId) {
+        setNoOfferError('No offerId found for this hotel.');
+        setNoOfferLoading(false);
+        return;
+      }
       const response = await beginTransaction({
         token,
         offerIds: [offerId],
-        currency: offer.price?.currency || 'EUR',
+        currency: 'EUR',
         culture: 'en-US'
       });
-
-      console.log('BeginTransaction Response:', response);
-      
       if (response.body) {
-        // Navigate to booking page with transaction data
-        navigate('/booking', { 
-          state: { 
+        navigate('/booking', {
+          state: {
             transactionData: response.body,
             hotelData: hotel,
-            offerData: offer
-          } 
+            offerData: { offerId }
+          }
         });
       } else {
-        setTransactionError('Transaction response is invalid');
+        setNoOfferError('Transaction başlatılamadı');
       }
-      
-    } catch (error) {
-      console.error('Error starting transaction:', error);
-      setTransactionError('Transaction başlatılamadı');
+    } catch (err) {
+      setNoOfferError('Transaction başlatılamadı');
     } finally {
-      const offerId = offer.offerId || offer.id || offer.offer_id || offer.offerID;
-      setTransactionLoading(prev => ({ ...prev, [offerId]: false }));
+      setNoOfferLoading(false);
     }
   };
+
+  const [mainOfferId, setMainOfferId] = useState<string | null>(null);
+  // Sayfa açılırken ana offerId'yi çek
+  useEffect(() => {
+    const fetchMainOfferId = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        if (!searchId || !offerId || !id) return;
+        const data = await getOffers({
+          token,
+          searchId,
+          offerId,
+          productType,
+          productId,
+          currency,
+          culture: 'tr-TR',
+          getRoomInfo: true
+        });
+        const offersBody = data.body;
+        let offerIdResult = offersBody && Array.isArray(offersBody.roomInfos) && offersBody.roomInfos.length > 0
+          ? offersBody.roomInfos[0]?.offerId || offersBody.roomInfos[0]?.id
+          : (offersBody && Array.isArray(offersBody.offers) && offersBody.offers.length > 0
+            ? offersBody.offers[0]?.offerId || offersBody.offers[0]?.id
+            : null);
+        setMainOfferId(offerIdResult);
+      } catch (err) {
+        setMainOfferId(null);
+      }
+    };
+    fetchMainOfferId();
+  }, [searchId, offerId, id, productType, productId, currency]);
 
   if (error) {
     return (
@@ -602,7 +658,7 @@ const HotelDetailsPage: React.FC = () => {
         </div>
         {/* Hotel Info */}
         <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center', padding: '0 32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', position: 'relative' }}>
             <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, letterSpacing: -1, color: 'white', textShadow: '0 2px 8px #1e3a8a44' }}>{hotel?.name || 'Hotel Name'}</h1>
             {hotel?.stars ? renderStars(hotel.stars) : null}
             {hotel?.stars && <span style={{ fontWeight: 700, fontSize: 18, color: '#fbbf24' }}>({hotel.stars})</span>}
@@ -610,6 +666,72 @@ const HotelDetailsPage: React.FC = () => {
             {hotel?.themes?.map((theme: any) => (
               <span key={theme.id} style={{ background: '#38bdf8', color: '#fff', borderRadius: 8, padding: '4px 12px', fontWeight: 700, fontSize: 15, boxShadow: '0 1px 4px #38bdf81a' }}>{theme.name}</span>
             ))}
+            {/* Book Now butonu başlığın sağında */}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+              <button
+                onClick={async () => {
+                  setNoOfferLoading(true);
+                  setNoOfferError(null);
+                  try {
+                    if (!offerId) {
+                      setNoOfferError('Fiyat bulunamadı.');
+                      setNoOfferLoading(false);
+                      return;
+                    }
+                    const token = localStorage.getItem('authToken');
+                    if (!token) {
+                      setNoOfferError('Authentication token not found');
+                      setNoOfferLoading(false);
+                      return;
+                    }
+                    const response = await beginTransaction({
+                      token,
+                      offerIds: [offerId],
+                      currency: 'EUR',
+                      culture: 'en-US'
+                    });
+                    if (response.body) {
+                      navigate('/booking', {
+                        state: {
+                          transactionData: response.body,
+                          hotelData: hotel,
+                          offerData: { offerId }
+                        }
+                      });
+                    } else {
+                      setNoOfferError('Transaction başlatılamadı');
+                    }
+                  } catch (err) {
+                    setNoOfferError('Transaction başlatılamadı');
+                  } finally {
+                    setNoOfferLoading(false);
+                  }
+                }}
+                disabled={noOfferLoading}
+                style={{
+                  background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: 18,
+                  padding: '10px 28px',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: noOfferLoading ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 12px #2563eb33',
+                  letterSpacing: 1,
+                  marginLeft: 18,
+                  outline: 'none',
+                  textShadow: '0 2px 8px #1e3a8a44',
+                  transition: 'background 0.2s, box-shadow 0.2s, transform 0.1s',
+                  minWidth: 140
+                }}
+              >
+                {noOfferLoading ? 'Processing...' : 'Book Now'}
+              </button>
+              {noOfferError && (
+                <span style={{ color: '#f43f5e', fontWeight: 700, fontSize: 16, marginLeft: 12 }}>{noOfferError}</span>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 16, fontWeight: 500, color: 'white', textShadow: '0 1px 4px #1e3a8a44' }}>
             <span>📍 {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || 'No address'}, {hotel?.country?.name || ''}</span>
@@ -896,9 +1018,6 @@ const HotelDetailsPage: React.FC = () => {
         {offersError && (
           <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 18, marginTop: 12, textAlign: 'center' }}>❌ {offersError}</div>
         )}
-        {transactionError && (
-          <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 18, marginTop: 12, textAlign: 'center' }}>❌ {transactionError}</div>
-        )}
         {offersData && !offersData.offers && !offersData.roomInfos && (
           <div style={{ color: '#64748b', fontWeight: 600, fontSize: 18, marginTop: 12, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 48 }}>🛏️</span>
@@ -1031,36 +1150,26 @@ const HotelDetailsPage: React.FC = () => {
                 
                 {/* Book Now Button */}
                 <button 
-                  onClick={() => handleBeginTransaction(offer)}
-                  disabled={transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]}
+                  onClick={() => handleBookThisOffer(offer)}
+                  disabled={!!transactionLoading[offer.offerId]}
                   style={{
-                    marginTop: 8,
-                    background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
+                    padding: '12px 24px',
+                    backgroundColor: '#2563eb',
                     color: 'white',
-                    fontWeight: 900,
-                    fontSize: 20,
-                    padding: '16px 0',
                     border: 'none',
-                    borderRadius: 14,
-                    cursor: transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 2px 12px #2563eb33',
-                    letterSpacing: 1,
-                    transition: 'background 0.18s, transform 0.12s',
-                    opacity: transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 0.7 : 1,
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: !!transactionLoading[offer.offerId] ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s'
                   }}
-                  onMouseOver={e => {
-                    if (!transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]) {
-                      e.currentTarget.style.background = 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)';
-                    }
-                  }}
-                  onMouseOut={e => {
-                    if (!transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]) {
-                      e.currentTarget.style.background = 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)';
-                    }
-                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                 >
-                  {transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 'Processing...' : 'Book Now'}
+                  {!!transactionLoading[offer.offerId] ? 'Processing...' : 'Book This Offer'}
                 </button>
+                {transactionError[offer.offerId] && (
+                  <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 16, marginTop: 8 }}>{transactionError[offer.offerId]}</div>
+                )}
               </div>
             ))}
           </div>
@@ -1406,11 +1515,8 @@ const HotelDetailsPage: React.FC = () => {
                   Close
                 </button>
                 <button
-                  onClick={() => {
-                    closeOfferDetailsModal();
-                    // Navigate to booking page or show booking form
-                    alert('Booking functionality will be implemented here');
-                  }}
+                  onClick={() => handleBookThisOffer(selectedOffer)}
+                  disabled={!!transactionLoading[selectedOffer.offerId]}
                   style={{
                     padding: '12px 24px',
                     backgroundColor: '#2563eb',
@@ -1418,14 +1524,17 @@ const HotelDetailsPage: React.FC = () => {
                     border: 'none',
                     borderRadius: '8px',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: !!transactionLoading[selectedOffer.offerId] ? 'not-allowed' : 'pointer',
                     transition: 'background-color 0.2s'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                 >
-                  Book This Offer
+                  {!!transactionLoading[selectedOffer.offerId] ? 'Processing...' : 'Book This Offer'}
                 </button>
+                {transactionError[selectedOffer.offerId] && (
+                  <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 16, marginTop: 8 }}>{transactionError[selectedOffer.offerId]}</div>
+                )}
               </div>
             </div>
           </div>
