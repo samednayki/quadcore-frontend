@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import SearchPage from './pages/SearchPage';
 import HotelList from './pages/HotelList';
 import HotelDetailsPage from './pages/HotelDetailsPage';
+import BookingPage from './pages/BookingPage';
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const App: React.FC = () => {
           <Route path="/" element={<SearchPage />} />
           <Route path="/hotels" element={<HotelList />} />
           <Route path="/hotel-details/:id" element={<HotelDetailsPage />} />
+          <Route path="/booking" element={<BookingPage />} />
         </Routes>
       </Router>
     </AuthProvider>

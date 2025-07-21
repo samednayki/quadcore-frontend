@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
 import { FaSnowflake, FaUtensils, FaCar, FaGlassCheers, FaConciergeBell, FaExchangeAlt, FaHotel, FaLock, FaCouch, FaMapMarkerAlt, FaClock, FaCheckCircle, FaWifi, FaSwimmingPool, FaUmbrellaBeach, FaRegDotCircle } from 'react-icons/fa';
-import { getOffers } from '../api';
+import { getOffers, beginTransaction } from '../api';
 
 const starSvg = (fill: string) => (
   <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
@@ -355,6 +355,10 @@ const HotelDetailsPage: React.FC = () => {
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
   const [offersData, setOffersData] = useState<any>(null);
+  
+  // BeginTransaction state
+  const [transactionLoading, setTransactionLoading] = useState<{ [key: string]: boolean }>({});
+  const [transactionError, setTransactionError] = useState<string | null>(null);
 
   // Offers API call
   const fetchOffers = async () => {
@@ -396,6 +400,64 @@ const HotelDetailsPage: React.FC = () => {
   };
 
   const navigate = useNavigate();
+
+  // BeginTransaction function
+  const handleBeginTransaction = async (offer: any) => {
+    try {
+      // Debug: Log the offer object to see its structure
+      console.log('Full offer object:', offer);
+      console.log('Offer keys:', Object.keys(offer));
+      
+      // Get the correct offerId - try different possible fields
+      const offerId = offer.offerId || offer.id || offer.offer_id || offer.offerID;
+      
+      if (!offerId) {
+        console.error('No offerId found in offer:', offer);
+        setTransactionError('Offer ID not found');
+        return;
+      }
+      
+      console.log('Using offerId:', offerId);
+      
+      setTransactionLoading(prev => ({ ...prev, [offerId]: true }));
+      setTransactionError(null);
+      
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setTransactionError('Authentication token not found');
+        return;
+      }
+
+      const response = await beginTransaction({
+        token,
+        offerIds: [offerId],
+        currency: offer.price?.currency || 'EUR',
+        culture: 'en-US'
+      });
+
+      console.log('BeginTransaction Response:', response);
+      
+      if (response.body) {
+        // Navigate to booking page with transaction data
+        navigate('/booking', { 
+          state: { 
+            transactionData: response.body,
+            hotelData: hotel,
+            offerData: offer
+          } 
+        });
+      } else {
+        setTransactionError('Transaction response is invalid');
+      }
+      
+    } catch (error) {
+      console.error('Error starting transaction:', error);
+      setTransactionError('Transaction başlatılamadı');
+    } finally {
+      const offerId = offer.offerId || offer.id || offer.offer_id || offer.offerID;
+      setTransactionLoading(prev => ({ ...prev, [offerId]: false }));
+    }
+  };
 
   if (error) {
     return (
@@ -834,6 +896,9 @@ const HotelDetailsPage: React.FC = () => {
         {offersError && (
           <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 18, marginTop: 12, textAlign: 'center' }}>❌ {offersError}</div>
         )}
+        {transactionError && (
+          <div style={{ color: '#f43f5e', fontWeight: 700, fontSize: 18, marginTop: 12, textAlign: 'center' }}>❌ {transactionError}</div>
+        )}
         {offersData && !offersData.offers && !offersData.roomInfos && (
           <div style={{ color: '#64748b', fontWeight: 600, fontSize: 18, marginTop: 12, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 48 }}>🛏️</span>
@@ -965,24 +1030,36 @@ const HotelDetailsPage: React.FC = () => {
                 </button>
                 
                 {/* Book Now Button */}
-                <button style={{
-                  marginTop: 8,
-                  background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
-                  color: 'white',
-                  fontWeight: 900,
-                  fontSize: 20,
-                  padding: '16px 0',
-                  border: 'none',
-                  borderRadius: 14,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 12px #2563eb33',
-                  letterSpacing: 1,
-                  transition: 'background 0.18s, transform 0.12s',
-                }}
-                  onMouseOver={e => (e.currentTarget.style.background = 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)')}
-                  onMouseOut={e => (e.currentTarget.style.background = 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)')}
+                <button 
+                  onClick={() => handleBeginTransaction(offer)}
+                  disabled={transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]}
+                  style={{
+                    marginTop: 8,
+                    background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
+                    color: 'white',
+                    fontWeight: 900,
+                    fontSize: 20,
+                    padding: '16px 0',
+                    border: 'none',
+                    borderRadius: 14,
+                    cursor: transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 12px #2563eb33',
+                    letterSpacing: 1,
+                    transition: 'background 0.18s, transform 0.12s',
+                    opacity: transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 0.7 : 1,
+                  }}
+                  onMouseOver={e => {
+                    if (!transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]) {
+                      e.currentTarget.style.background = 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)';
+                    }
+                  }}
+                  onMouseOut={e => {
+                    if (!transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID]) {
+                      e.currentTarget.style.background = 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)';
+                    }
+                  }}
                 >
-                  Book Now
+                  {transactionLoading[offer.offerId || offer.id || offer.offer_id || offer.offerID] ? 'Processing...' : 'Book Now'}
                 </button>
               </div>
             ))}
