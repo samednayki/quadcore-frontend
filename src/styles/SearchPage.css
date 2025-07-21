@@ -1,3 +1,37 @@
+/* Google Fonts importu (kendi index.html veya App.css'ye de ekleyebilirsiniz) */
+@import url('https://fonts.googleapis.com/css?family=Inter:300,400,500,600&display=swap');
+
+body, html, input, button, select, textarea, label, h1, h2, h3, h4, h5, h6, div, span, p, a, th, td, strong, b, em, i {
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
+  color: #232931;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600 !important;
+}
+
+/* Placeholder'lar da aynı fontta olsun */
+input::placeholder, textarea::placeholder {
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif !important;
+  font-weight: 400 !important;
+  color: #b0b0b0;
+  opacity: 1;
+}
+
+/* Varsayılan font ayarlarını ezmek için diğer önemli input, button, select, label, vs. için de ekle */
+input, button, select, textarea, label {
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif !important;
+  font-weight: 400 !important;
+}
+
+/* Başlıklar için renk ve spacing de ekleyebilirsiniz */
+h1, h2, h3, h4, h5, h6 {
+  color: #6c63ff;
+  letter-spacing: 0.01em;
+}
+
 .search-page-outer {
   min-height: 100vh;
   display: flex;

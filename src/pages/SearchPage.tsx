@@ -92,6 +92,11 @@ const SearchPage: React.FC = () => {
   const [currencyDropdownPos, setCurrencyDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const [nationalityDropdownPos, setNationalityDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
+  // Modal için state'ler
+  const [showChildAgeModal, setShowChildAgeModal] = useState(false);
+  const [pendingRoomId, setPendingRoomId] = useState<number | null>(null);
+  const [pendingChildAges, setPendingChildAges] = useState<number[]>([]);
+
   // Dropdown positioning functions
   const calculateDropdownPosition = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
@@ -114,12 +119,16 @@ const SearchPage: React.FC = () => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+  // Tarih formatlama fonksiyonu (UTC değil, yerel saat)
+  function formatDateLocal(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   const isDateAvailable = (date: Date) => {
-    const dateString = formatDate(date);
+    const dateString = formatDateLocal(date);
     // Check if the date is in the available dates array
     // Backend returns ISO format, so we need to check if any date starts with our date string
     return availableDates.some(availableDate => availableDate.startsWith(dateString));
@@ -134,11 +143,11 @@ const SearchPage: React.FC = () => {
   };
 
   const isSelectedDate = (date: Date) => {
-    return selectedCheckInDate === formatDate(date);
+    return selectedCheckInDate === formatDateLocal(date);
   };
 
   const isSelectedCheckOutDate = (date: Date) => {
-    return selectedCheckOutDate === formatDate(date);
+    return selectedCheckOutDate === formatDateLocal(date);
   };
 
   const isToday = (date: Date) => {
@@ -230,7 +239,7 @@ const SearchPage: React.FC = () => {
 
   const selectDate = (date: Date) => {
     if (isDateAvailable(date)) {
-      setSelectedCheckInDate(formatDate(date));
+      setSelectedCheckInDate(formatDateLocal(date));
       setShowCheckInCalendar(false);
     }
   };
@@ -240,7 +249,7 @@ const SearchPage: React.FC = () => {
     if (selectedCheckInDate && date <= new Date(selectedCheckInDate)) {
       return; // Don't allow checkout date before or equal to checkin date
     }
-    setSelectedCheckOutDate(formatDate(date));
+    setSelectedCheckOutDate(formatDateLocal(date));
     setShowCheckOutCalendar(false);
   };
 
@@ -256,7 +265,7 @@ const SearchPage: React.FC = () => {
     const today = new Date();
     setCurrentMonth(today);
     if (isDateAvailable(today)) {
-      setSelectedCheckInDate(formatDate(today));
+      setSelectedCheckInDate(formatDateLocal(today));
     }
   };
 
@@ -264,7 +273,7 @@ const SearchPage: React.FC = () => {
     const today = new Date();
     setCurrentCheckOutMonth(today);
     if (selectedCheckInDate && today > new Date(selectedCheckInDate)) {
-      setSelectedCheckOutDate(formatDate(today));
+      setSelectedCheckOutDate(formatDateLocal(today));
     }
   };
 
@@ -520,6 +529,46 @@ const SearchPage: React.FC = () => {
     }
   };
 
+  // Modal açıldığında yaşları ayarla
+  const openChildAgeModal = (roomId: number, newChildCount: number, currentAges: number[]) => {
+    setPendingRoomId(roomId);
+    // Yeni çocuk ekleniyorsa varsayılan yaş 5 ekle
+    let ages = [...currentAges];
+    if (newChildCount > currentAges.length) {
+      for (let i = currentAges.length; i < newChildCount; i++) {
+        ages.push(5);
+      }
+    } else if (newChildCount < currentAges.length) {
+      ages = ages.slice(0, newChildCount);
+    }
+    setPendingChildAges(ages);
+    setShowChildAgeModal(true);
+  };
+
+  // Modalda yaş güncelle
+  const updatePendingChildAge = (idx: number, age: number) => {
+    setPendingChildAges(prev => {
+      const arr = [...prev];
+      arr[idx] = Math.max(0, Math.min(17, age));
+      return arr;
+    });
+  };
+
+  // Modalda kaydet
+  const saveChildAges = () => {
+    if (pendingRoomId !== null) {
+      setRooms(rooms => rooms.map(room => {
+        if (room.id === pendingRoomId) {
+          return { ...room, children: pendingChildAges.length, childAges: pendingChildAges };
+        }
+        return room;
+      }));
+    }
+    setShowChildAgeModal(false);
+    setPendingRoomId(null);
+    setPendingChildAges([]);
+  };
+
   useEffect(() => {
     // Sayfa yüklendiğinde otomatik login yap
     performAutoLogin();
@@ -640,6 +689,10 @@ const SearchPage: React.FC = () => {
           minHeight: '100vh',
           width: '100vw',
           position: 'relative',
+          fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
+          fontWeight: 400,
+          letterSpacing: 0.01,
+          color: '#232931'
         }}
       >
         <header className="app-header">
@@ -649,26 +702,6 @@ const SearchPage: React.FC = () => {
           </div>
           <nav className="nav-links">
             <a href="#" className="nav-link nav-box">{FaHome({ className: "nav-icon" })}<span className="nav-text">Home</span></a>
-            <a
-              href="#"
-              className="nav-link nav-box"
-              onClick={e => {
-                e.preventDefault();
-                const lastParams = localStorage.getItem('lastHotelSearchParams');
-                if (lastParams) {
-                  try {
-                    const parsed = JSON.parse(lastParams);
-                    navigate('/hotels', { state: { searchParams: parsed } });
-                  } catch {
-                    navigate('/');
-                  }
-                } else {
-                  navigate('/');
-                }
-              }}
-            >
-              {FaSearch({ className: "nav-icon" })}<span className="nav-text">Search Hotels</span>
-            </a>
             <a href="#" className="nav-link nav-box">{FaBookmark({ className: "nav-icon" })}<span className="nav-text">My Reservations</span></a>
           </nav>
         </header>
@@ -680,33 +713,26 @@ const SearchPage: React.FC = () => {
           }}
         >
           <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Animated Intro Section */}
-            <div className="animated-intro-section">
-              <div className="animated-text-container">
-                <div className={`animated-text ${currentTextIndex === 0 ? 'active' : ''}`}>
-                  <img src={logoUrl} alt="HotelRes Logo" className="intro-logo" />
-                  Welcome to HotelRes
-                </div>
-                <div className={`animated-text ${currentTextIndex === 1 ? 'active' : ''}`}>🌟 The World's Best Hotels</div>
-                <div className={`animated-text ${currentTextIndex === 2 ? 'active' : ''}`}>💎 Luxury and Comfort Together</div>
-                <div className={`animated-text ${currentTextIndex === 3 ? 'active' : ''}`}>🌍 Service in 150+ Countries</div>
-                <div className={`animated-text ${currentTextIndex === 4 ? 'active' : ''}`}>🎯 Best Price Guarantee</div>
-                <div className={`animated-text ${currentTextIndex === 5 ? 'active' : ''}`}>✨ Unforgettable Holiday Experiences</div>
-              </div>
-            </div>
-            
-            <div className="search-card search-card-v2">
+            <div className="search-card search-card-v2" style={{ marginTop: '32px' }}>
               <form className="search-form-v2" onSubmit={handleSearchSubmit}>
-                <h2 className="search-title-v2">Where do you want to go?</h2>
-                
+                <h2 className="search-title-v2" style={{ fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontWeight: 600, letterSpacing: 0.01 }}>Where do you want to go?</h2>
                 {searchError && (
                   <div className="search-error-message">
                     <span className="error-icon">⚠️</span>
                     {searchError}
                   </div>
                 )}
-                <div className="destination-row-v2">
-                  <span className="destination-icon-v2">📍</span>
+                <div className="destination-row-v2" style={{
+                  border: '1.5px solid #bbdefb',
+                  borderRadius: '16px',
+                  padding: '0.7rem 1.2rem',
+                  background: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}>
+                  <span className="destination-icon-v2" style={{ marginRight: 8 }}>📍</span>
                   <input 
                     className="destination-input-v2" 
                     type="text" 
@@ -724,15 +750,22 @@ const SearchPage: React.FC = () => {
                       setShowNationalityDropdown(false);
                     }}
                     onBlur={() => {
-                      // Delay hiding to allow clicking on suggestions
                       setTimeout(() => setShowAutocomplete(false), 300);
+                    }}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      background: 'transparent',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      fontWeight: 400,
+                      fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
+                      fontSize: '1.08rem'
                     }}
                   />
                   {loadingAutocomplete && (
                     <div className="autocomplete-loading">⏳</div>
                   )}
-                  
-                  {/* Autocomplete Dropdown */}
                   {showAutocomplete && (
                     <div className="autocomplete-dropdown">
                       {autocompleteResults.length > 0 ? (
@@ -745,7 +778,6 @@ const SearchPage: React.FC = () => {
                             let destinationId = '';
                             let destinationType = 0;
                             let destinationName = '';
-
                             if (item.hotel) {
                               displayText = `${item.hotel.name}, ${item.city?.name || ''}, ${item.country?.name || ''}`;
                               destinationId = item.hotel.id;
@@ -767,7 +799,6 @@ const SearchPage: React.FC = () => {
                               destinationType = item.type;
                               destinationName = item.country.name;
                             }
-
                             setDestinationQuery(displayText);
                             setSelectedDestination({
                               id: destinationId,
@@ -775,8 +806,6 @@ const SearchPage: React.FC = () => {
                               name: destinationName
                             });
                             setShowAutocomplete(false);
-
-                            // Fetch check-in dates for selected destination
                             if (destinationId && destinationType) {
                               fetchCheckInDates(destinationId, destinationType);
                             }
@@ -809,7 +838,8 @@ const SearchPage: React.FC = () => {
                 <div className="dates-row-v2">
                   <div className="date-col-v2">
                     <label className="date-label-v2">
-                      {FaCalendarAlt({ className: "date-icon-v2" })} Check-in Date
+                      {FaCalendarAlt({ className: "date-icon-v2" })}
+                      <span style={{ fontWeight: 600, fontSize: '1.08rem', fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, marginLeft: 6 }}>Check-in</span>
                       {loadingCheckIn && <span className="loading-indicator"> ⏳</span>}
                     </label>
                     <div className="calendar-input-container">
@@ -834,6 +864,7 @@ const SearchPage: React.FC = () => {
                         readOnly
                         disabled={!selectedDestination || loadingCheckIn}
                         onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
+                        style={{ fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}
                       />
                     </div>
                     
@@ -916,7 +947,10 @@ const SearchPage: React.FC = () => {
 
                   </div>
                   <div className="date-col-v2">
-                    <label className="date-label-v2">{FaCalendarAlt({ className: "date-icon-v2" })} Check-out Date</label>
+                    <label className="date-label-v2">
+                      {FaCalendarAlt({ className: "date-icon-v2" })}
+                      <span style={{ fontWeight: 600, fontSize: '1.08rem', fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, marginLeft: 6 }}>Check-out</span>
+                    </label>
                     <div className="calendar-input-container">
                       <input
                         className="date-input-v2"
@@ -935,6 +969,7 @@ const SearchPage: React.FC = () => {
                         readOnly
                         disabled={!selectedCheckInDate}
                         onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
+                        style={{ fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}
                       />
                     </div>
                     {showCheckOutCalendar && (
@@ -1008,105 +1043,194 @@ const SearchPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="guests-section-v2">
-                  <div className="guests-header-v2">👥 Guests</div>
-                  <div className="guests-rooms-label-v2">Guests and Rooms</div>
-                  <div className="guests-rooms-box-v2">
+                  <div className="guests-header-v2" style={{ fontSize: '1.35rem', fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, color: '#232931' }}>
+                    Guests
+                  </div>
+                  <div className="guests-rooms-box-v2" style={{ background: 'none', boxShadow: 'none', border: 'none', padding: 0 }}>
                     {rooms.map((room, index) => (
-                      <div key={room.id} className="room-container-v2">
-                        <div className="room-header-v2">
-                          <span className="room-title-v2">🛏️ Room {index + 1}</span>
-                          <div className="room-header-controls">
-                            <span className="room-summary-v2">{room.adults + room.children} Guest</span>
+                      <div key={room.id} style={{
+                        background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                        border: '1.5px solid #bbdefb',
+                        borderRadius: '16px',
+                        padding: '1.5rem 1.2rem',
+                        marginBottom: '1.2rem',
+                        boxShadow: '0 2px 8px rgba(33,150,243,0.07)',
+                        position: 'relative'
+                      }}>
+                        {/* Sol üstte oda silme butonu */}
                             {rooms.length > 1 && (
                               <button 
                                 type="button" 
-                                className="remove-room-btn-v2"
                                 onClick={() => removeRoom(room.id)}
-                              >
-                                ✕
+                            style={{
+                              position: 'absolute',
+                              top: -12,
+                              left: -12,
+                              width: 32,
+                              height: 32,
+                              borderRadius: '50%',
+                              background: '#424242',
+                              color: '#fff',
+                              border: '2px solid #fff',
+                              opacity: 0.85,
+                              fontSize: 20,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                              zIndex: 2
+                            }}
+                            title="Remove room"
+                            onMouseOver={e => {
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.opacity = '0.85';
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                            }}
+                          >
+                            &minus;
                               </button>
                             )}
-                          </div>
-                        </div>
                         <div className="room-row-v2">
-                          <span className="room-row-label-v2">🧑‍🦱 Adult</span>
+                          <span className="room-row-label-v2" style={{ fontSize: '1.18rem', fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>
+                            Adult
+                          </span>
                           <div className="room-row-controls-v2">
                             <button 
                               type="button" 
-                              className={`room-minus-btn-v2 ${room.adults <= 1 ? 'disabled' : ''}`}
+                              className={`plain-icon-btn ${room.adults <= 1 ? 'disabled' : ''}`}
                               onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)}
                               disabled={room.adults <= 1}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                boxShadow: 'none',
+                                color: '#fff',
+                                fontSize: '2.3rem',
+                                fontWeight: 800,
+                                width: 40,
+                                height: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                transition: 'color 0.2s, text-shadow 0.2s',
+                                cursor: room.adults <= 1 ? 'not-allowed' : 'pointer',
+                                padding: 0,
+                                opacity: room.adults <= 1 ? 0.4 : 1,
+                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
+                              }}
+                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
+                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
                             >
-                              {FaMinus({})}
+                              &minus;
                             </button>
                             <span className="room-count-v2">{room.adults}</span>
                             <button 
                               type="button" 
-                              className={`room-plus-btn-v2 ${room.adults >= MAX_ADULTS ? 'disabled' : ''}`}
+                              className={`plain-icon-btn ${room.adults >= MAX_ADULTS ? 'disabled' : ''}`}
                               onClick={() => updateRoomGuests(room.id, 'adults', room.adults + 1)}
                               disabled={room.adults >= MAX_ADULTS}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                boxShadow: 'none',
+                                color: '#fff',
+                                fontSize: '2.3rem',
+                                fontWeight: 800,
+                                width: 40,
+                                height: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                transition: 'color 0.2s, text-shadow 0.2s',
+                                cursor: room.adults >= MAX_ADULTS ? 'not-allowed' : 'pointer',
+                                padding: 0,
+                                opacity: room.adults >= MAX_ADULTS ? 0.4 : 1,
+                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
+                              }}
+                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
+                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
                             >
-                              {FaPlus({})}
+                              +
                             </button>
                           </div>
                         </div>
                         <div className="room-row-v2">
-                          <span className="room-row-label-v2">🧒 Children <span className="room-row-age-v2">[0-17]</span></span>
+                          <span className="room-row-label-v2" style={{ fontSize: '1.18rem', fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>
+                            Children <span className="room-row-age-v2">[0-17]</span>
+                          </span>
                           <div className="room-row-controls-v2">
                             <button 
                               type="button" 
-                              className={`room-minus-btn-v2 ${room.children <= 0 ? 'disabled' : ''}`}
+                              className={`plain-icon-btn ${room.children <= 0 ? 'disabled' : ''}`}
                               onClick={() => updateRoomGuests(room.id, 'children', room.children - 1)}
                               disabled={room.children <= 0}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                boxShadow: 'none',
+                                color: '#fff',
+                                fontSize: '2.3rem',
+                                fontWeight: 800,
+                                width: 40,
+                                height: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                transition: 'color 0.2s, text-shadow 0.2s',
+                                cursor: room.children <= 0 ? 'not-allowed' : 'pointer',
+                                padding: 0,
+                                opacity: room.children <= 0 ? 0.4 : 1,
+                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
+                              }}
+                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
+                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
                             >
-                              {FaMinus({})}
+                              &minus;
                             </button>
                             <span className="room-count-v2">{room.children}</span>
                             <button 
                               type="button" 
-                              className={`room-plus-btn-v2 ${room.children >= MAX_CHILDREN ? 'disabled' : ''}`}
-                              onClick={() => updateRoomGuests(room.id, 'children', room.children + 1)}
+                              className={`plain-icon-btn ${room.children >= MAX_CHILDREN ? 'disabled' : ''}`}
+                              onClick={() => openChildAgeModal(room.id, room.children + 1, room.childAges)}
                               disabled={room.children >= MAX_CHILDREN}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                boxShadow: 'none',
+                                color: '#fff',
+                                fontSize: '2.3rem',
+                                fontWeight: 800,
+                                width: 40,
+                                height: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                transition: 'color 0.2s, text-shadow 0.2s',
+                                cursor: room.children >= MAX_CHILDREN ? 'not-allowed' : 'pointer',
+                                padding: 0,
+                                opacity: room.children >= MAX_CHILDREN ? 0.4 : 1,
+                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
+                              }}
+                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
+                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
                             >
-                              {FaPlus({})}
+                              +
                             </button>
                           </div>
                         </div>
-                        
-                        {/* Child Ages Section */}
-                        {room.children > 0 && (
-                          <div className="child-ages-section-v2">
-                            <div className="child-ages-header-v2">
-                              <span className="child-ages-title-v2">👶 Child Ages</span>
-                            </div>
-                            <div className="child-ages-grid-v2">
-                              {room.childAges.map((age, childIndex) => (
-                                <div key={childIndex} className="child-age-item-v2">
-                                  <span className="child-age-label-v2">Child {childIndex + 1}</span>
-                                  <div className="child-age-controls-v2">
-                                    <button 
-                                      type="button" 
-                                      className={`room-minus-btn-v2 ${age <= 0 ? 'disabled' : ''}`}
-                                      onClick={() => updateChildAge(room.id, childIndex, age - 1)}
-                                      disabled={age <= 0}
-                                    >
-                                      {FaMinus({})}
-                                    </button>
-                                    <span className="room-count-v2">{age}</span>
-                                    <button 
-                                      type="button" 
-                                      className={`room-plus-btn-v2 ${age >= 17 ? 'disabled' : ''}`}
-                                      onClick={() => updateChildAge(room.id, childIndex, age + 1)}
-                                      disabled={age >= 17}
-                                    >
-                                      {FaPlus({})}
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {/* Çocuk yaşları ana ekranda hiçbir zaman gösterilmeyecek */}
                         {index < rooms.length - 1 && <div className="room-divider-v2"></div>}
                       </div>
                     ))}
@@ -1114,6 +1238,24 @@ const SearchPage: React.FC = () => {
                   <button 
                     type="button" 
                     className={`add-room-btn-v2 ${rooms.length >= MAX_ROOMS ? 'disabled' : ''}`}
+                    style={{
+                      padding: '0.4rem 1rem',
+                      fontSize: '0.98rem',
+                      minHeight: '32px',
+                      border: '1.5px solid #bbdefb',
+                      background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                      color: '#1976d2',
+                      borderRadius: '8px',
+                      fontWeight: 500,
+                      marginTop: '0.5rem',
+                      marginBottom: '0.5rem',
+                      boxShadow: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      cursor: rooms.length >= MAX_ROOMS ? 'not-allowed' : 'pointer',
+                      opacity: rooms.length >= MAX_ROOMS ? 0.6 : 1
+                    }}
                     onClick={addRoom}
                     disabled={rooms.length >= MAX_ROOMS}
                   >
@@ -1125,32 +1267,64 @@ const SearchPage: React.FC = () => {
                 </div>
                 <div className="bottom-row-v2">
                   <div className="currency-col-v2">
-                    <label className="currency-label-v2">💵 Currency</label>
-                    <div className="custom-select-container" ref={currencyRef}>
-                      <div 
-                        className="custom-select-input"
-                        onClick={() => {
-                          const scrollY = window.scrollY;
-                          setShowCurrencyDropdown(!showCurrencyDropdown);
+                    <label className="currency-label-v2" style={{ fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontSize: '1.08rem', color: '#444', marginBottom: 8 }}>Currency</label>
+                    <div
+                      ref={currencyRef}
+                      style={{
+                        border: '1.5px solid #bbdefb',
+                        borderRadius: '16px',
+                        padding: '0.7rem 1.2rem',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        position: 'relative'
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={currencySearch}
+                        onChange={e => {
+                          setCurrencySearch(e.target.value);
+                          setShowCurrencyDropdown(true);
                           setShowNationalityDropdown(false);
                           setShowAutocomplete(false);
-                          setTimeout(() => window.scrollTo({ top: scrollY }), 0);
                         }}
+                        onFocus={() => setShowCurrencyDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowCurrencyDropdown(false), 200)}
+                        placeholder="Currency"
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          width: '100%',
+                          fontWeight: 400,
+                          fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
+                          fontSize: '1.08rem',
+                          color: '#232931'
+                        }}
+                      />
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          color: '#888',
+                          fontSize: 18,
+                          userSelect: 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
                       >
-                        <span className="select-text">
-                          {selectedCurrency ? currencies.find(c => c.code === selectedCurrency)?.name : 'Select...'}
-                        </span>
-                        <span className="select-arrow">▼</span>
-                      </div>
-                      
+                        ▼
+                      </span>
                       {showCurrencyDropdown && createPortal(
-                        <div 
+                        <div
                           className="custom-select-dropdown"
                           style={{
                             position: 'absolute',
-                            top: `${currencyDropdownPos.top}px`,
-                            left: `${currencyDropdownPos.left}px`,
-                            width: `${currencyDropdownPos.width}px`,
+                            top: currencyDropdownPos.top,
+                            left: currencyDropdownPos.left,
+                            width: currencyDropdownPos.width,
                             zIndex: 9999,
                             backgroundColor: 'white',
                             border: '1px solid #e2e8f0',
@@ -1161,31 +1335,21 @@ const SearchPage: React.FC = () => {
                             marginTop: 0
                           }}
                         >
-                          <div className="dropdown-search-container">
-                            <input
-                              type="text"
-                              placeholder="Search currency..."
-                              value={currencySearch}
-                              onChange={(e) => setCurrencySearch(e.target.value)}
-                              className="dropdown-search-input"
-                            />
-                          </div>
                           <div className="dropdown-items-container">
-                            {!loadingCurrency && currencies
-                              .filter(currency => 
-                                currency.name.toLowerCase().includes(currencySearch.toLowerCase()) ||
-                                currency.code.toLowerCase().includes(currencySearch.toLowerCase())
+                            {currencies
+                              .filter(currency =>
+                                currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
+                                currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
                               )
-                              .map((currency) => (
-                                <div 
-                                  key={currency.code} 
+                              .map(currency => (
+                                <div
+                                  key={currency.code}
                                   className="custom-select-item"
-                                  onClick={(e) => {
+                                  onMouseDown={e => {
                                     e.preventDefault();
-                                    e.stopPropagation();
                                     setSelectedCurrency(currency.code);
+                                    setCurrencySearch(currency.name);
                                     setShowCurrencyDropdown(false);
-                                    setCurrencySearch('');
                                   }}
                                 >
                                   <div className="select-item-icon">💵</div>
@@ -1195,9 +1359,9 @@ const SearchPage: React.FC = () => {
                                   </div>
                                 </div>
                               ))}
-                            {!loadingCurrency && currencies.filter(currency => 
-                              currency.name.toLowerCase().includes(currencySearch.toLowerCase()) ||
-                              currency.code.toLowerCase().includes(currencySearch.toLowerCase())
+                            {currencies.filter(currency =>
+                              currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
+                              currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
                             ).length === 0 && (
                               <div className="dropdown-no-results">
                                 <div className="no-results-icon">🔍</div>
@@ -1210,39 +1374,65 @@ const SearchPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  
                   <div className="nationality-col-v2">
-                    <label className="nationality-label-v2">🏳️ Nationality</label>
-                    <div className="custom-select-container" ref={nationalityRef}>
-                      <div 
-                        className="custom-select-input"
-                        onClick={() => {
-                          const scrollY = window.scrollY;
-                          setShowNationalityDropdown(!showNationalityDropdown);
+                    <label className="nationality-label-v2" style={{ fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontSize: '1.08rem', color: '#444', marginBottom: 8 }}>Nationality</label>
+                    <div
+                      ref={nationalityRef}
+                      style={{
+                        border: '1.5px solid #bbdefb',
+                        borderRadius: '16px',
+                        padding: '0.7rem 1.2rem',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        position: 'relative'
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={nationalitySearch}
+                        onChange={e => {
+                          setNationalitySearch(e.target.value);
+                          setShowNationalityDropdown(true);
                           setShowCurrencyDropdown(false);
                           setShowAutocomplete(false);
-                          setTimeout(() => window.scrollTo({ top: scrollY }), 0);
                         }}
+                        onFocus={() => setShowNationalityDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowNationalityDropdown(false), 200)}
+                        placeholder="Nationality"
+                        style={{
+                          border: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          width: '100%',
+                          fontWeight: 400,
+                          fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
+                          fontSize: '1.08rem',
+                          color: '#232931'
+                        }}
+                      />
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          color: '#888',
+                          fontSize: 18,
+                          userSelect: 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setShowNationalityDropdown(!showNationalityDropdown)}
                       >
-                        <span className="select-text">
-                          {selectedNationality ? (
-                            <>
-                              <span className="selected-flag">{getCountryFlag(selectedNationality)}</span>
-                              <span className="selected-text">{nationalities.find(n => n.id === selectedNationality)?.name}</span>
-                            </>
-                          ) : 'Select...'}
-                        </span>
-                        <span className="select-arrow">▼</span>
-                      </div>
-                      
+                        ▼
+                      </span>
                       {showNationalityDropdown && createPortal(
-                        <div 
+                        <div
                           className="custom-select-dropdown"
                           style={{
                             position: 'absolute',
-                            top: `${nationalityDropdownPos.top}px`,
-                            left: `${nationalityDropdownPos.left}px`,
-                            width: `${nationalityDropdownPos.width}px`,
+                            top: nationalityDropdownPos.top,
+                            left: nationalityDropdownPos.left,
+                            width: nationalityDropdownPos.width,
                             zIndex: 9999,
                             backgroundColor: 'white',
                             border: '1px solid #e2e8f0',
@@ -1253,44 +1443,32 @@ const SearchPage: React.FC = () => {
                             marginTop: 0
                           }}
                         >
-                          <div className="dropdown-search-container">
-                            <input
-                              type="text"
-                              placeholder="Search nationality..."
-                              value={nationalitySearch}
-                              onChange={(e) => setNationalitySearch(e.target.value)}
-                              className="dropdown-search-input"
-                            />
-                          </div>
                           <div className="dropdown-items-container">
-                            {!loadingNationality && nationalities
-                              .filter(nationality => 
-                                nationality.name.toLowerCase().includes(nationalitySearch.toLowerCase()) ||
-                                nationality.id.toLowerCase().includes(nationalitySearch.toLowerCase())
+                            {nationalities
+                              .filter(nationality =>
+                                nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
+                                nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
                               )
-                              .map((nationality) => (
-                                <div 
-                                  key={nationality.id} 
+                              .map(nationality => (
+                                <div
+                                  key={nationality.id}
                                   className="custom-select-item"
-                                  onClick={(e) => {
+                                  onMouseDown={e => {
                                     e.preventDefault();
-                                    e.stopPropagation();
                                     setSelectedNationality(nationality.id);
+                                    setNationalitySearch(nationality.name);
                                     setShowNationalityDropdown(false);
-                                    setNationalitySearch('');
                                   }}
                                 >
-                                  <div className="select-item-icon">
-                                    {getCountryFlag(nationality.id)}
-                                  </div>
+                                  <div className="select-item-icon">{getCountryFlag(nationality.id)}</div>
                                   <div className="select-item-content">
                                     <div className="select-item-title">{nationality.name}</div>
                                   </div>
                                 </div>
                               ))}
-                            {!loadingNationality && nationalities.filter(nationality => 
-                              nationality.name.toLowerCase().includes(nationalitySearch.toLowerCase()) ||
-                              nationality.id.toLowerCase().includes(nationalitySearch.toLowerCase())
+                            {nationalities.filter(nationality =>
+                              nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
+                              nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
                             ).length === 0 && (
                               <div className="dropdown-no-results">
                                 <div className="no-results-icon">🔍</div>
@@ -1304,7 +1482,23 @@ const SearchPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <button type="submit" className="search-btn-v2">
+                <button type="submit" className="search-btn-v2" style={{
+                  padding: '1.25rem 2rem',
+                  background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                  color: '#1976d2',
+                  border: '1.5px solid #bbdefb',
+                  borderRadius: '16px',
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  marginTop: '1rem',
+                  boxShadow: '0 2px 8px rgba(33,150,243,0.07)'
+                }}>
                   {FaSearch({ className: "search-btn-icon-v2" })} Search Hotels
                 </button>
               </form>
@@ -1312,62 +1506,99 @@ const SearchPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <footer className="footer" style={{ marginTop: '50px', backgroundColor: '#1e3a8a', color: 'white', padding: '40px 0 20px 0' }}>
-        <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h3 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img 
-                src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
-                alt="HotelRes Logo"
-                style={{ height: 48, borderRadius: 12, marginRight: 14, verticalAlign: 'middle' }}
-              />
-              HotelRes
-            </h3>
-            <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>Your trusted partner for the best hotel experience</p>
-            <div className="social-links" style={{ display: 'flex', gap: '15px' }}>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📘 Facebook</a>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📷 Instagram</a>
-              <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>🐦 Twitter</a>
+      {/* Çocuk yaş modalı */}
+      {showChildAgeModal && (
+        <div className="child-age-modal-overlay" style={{ position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="child-age-modal" style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', padding: 32, minWidth: 320, maxWidth: 400 }}>
+            <h3 style={{ color: '#ff9800', fontWeight: 600, fontSize: 20, marginBottom: 18, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>Enter Child Ages</h3>
+            {pendingChildAges.map((age, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, background: '#fff8e1', borderRadius: 8, padding: 12 }}>
+                <span style={{ color: '#e65100', fontWeight: 500, fontSize: 16 }}>Child {idx + 1}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button type="button" style={{ background: '#ff5252', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age - 1)} disabled={age <= 0}>-</button>
+                  <span style={{ fontWeight: 600, fontSize: 18, color: '#e65100', minWidth: 24, textAlign: 'center' }}>{age}</span>
+                  <button type="button" style={{ background: '#4caf50', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age + 1)} disabled={age >= 17}>+</button>
             </div>
           </div>
-          
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>🔍 Quick Access</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🏠 Home Page</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🔍 Search Hotels</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>📋 My Reservations</a></li>
-              <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>⭐ My favorites</a></li>
-            </ul>
-          </div>
-          
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>📞 Contact</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📧 info@hotelres.com</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📱 +90 212 555 0123</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>📍 Antalya, Turkey</li>
-              <li style={{ marginBottom: '10px', color: 'white' }}>🕒 7/24 Support</li>
-            </ul>
-          </div>
-          
-          <div className="footer-section" style={{ marginBottom: '30px' }}>
-            <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Payment Methods</h4>
-            <div className="payment-methods" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 Visa</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 MasterCard</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 PayPal</span>
-              <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>🏦 Bank Transfer</span>
+            ))}
+            {/* Add Child butonu */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
+              <button
+                type="button"
+                style={{
+                  background: '#4caf50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  fontSize: 18,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={() => pendingChildAges.length < MAX_CHILDREN && setPendingChildAges([...pendingChildAges, 5])}
+                disabled={pendingChildAges.length >= MAX_CHILDREN}
+              >
+                {FaPlus({})}
+              </button>
+              <span style={{ fontWeight: 500, color: '#4caf50', fontSize: 16 }}>Add Child</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 18 }}>
+              <button type="button" style={{ background: '#ececec', color: '#232931', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 500, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={() => setShowChildAgeModal(false)}>Cancel</button>
+              <button type="button" style={{ background: '#ff9800', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={saveChildAges}>Save</button>
             </div>
           </div>
         </div>
-        
-        <div className="footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '30px', paddingTop: '20px', textAlign: 'center' }}>
-          <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)' }}>&copy; 2025 HotelRes. All rights reserved.</p>
-          <div className="footer-bottom-links" style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Privacy Policy</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Terms of Use</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Cookie Policy</a>
+      )}
+      <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
+        <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <p style={{ fontSize: '1.08rem', fontWeight: 400, color: '#e0e0e0', marginBottom: '1.1rem', lineHeight: 1.5, textAlign: 'left' }}>
+              Your trusted partner for the best hotel experience
+            </p>
+            <div className="social-links" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-start' }}>
+              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Facebook</a>
+              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Instagram</a>
+              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Twitter</a>
+            </div>
+          </div>
+          <div className="footer-section">
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Quick Access</h4>
+            <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
+              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Home Page</a></li>
+              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Search Hotels</a></li>
+              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My Reservations</a></li>
+              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My favorites</a></li>
+            </ul>
+          </div>
+          <div className="footer-section">
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Contact</h4>
+            <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
+              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>info@hotelres.com</li>
+              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>+90 212 555 0123</li>
+              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>Antalya, Turkey</li>
+              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>7/24 Support</li>
+            </ul>
+          </div>
+          <div className="footer-section">
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Payment Methods</h4>
+            <div className="payment-methods" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Visa</span>
+              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>MasterCard</span>
+              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>PayPal</span>
+              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Bank Transfer</span>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom" style={{ padding: '0.7rem 1rem 0 1rem', fontSize: '0.95rem', color: '#b0b0b0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span>© 2025 HotelRes. All rights reserved.</span>
+          <div className="footer-bottom-links" style={{ display: 'flex', gap: '1rem' }}>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Privacy Policy</a>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Terms of Use</a>
+            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Cookie Policy</a>
           </div>
         </div>
       </footer>
