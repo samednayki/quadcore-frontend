@@ -571,3 +571,41 @@ export async function commitTransaction({
   if (!response.ok) throw new Error("Rezervasyon tamamlanamadı");
   return response.json();
 }
+
+export async function getReservationList({ token, dateCriteria, culture = 'en-US' }: {
+  token: string;
+  dateCriteria: Array<{ type: number; from: string; to: string }>;
+  culture?: string;
+}) {
+  const requestBody = {
+    dateCriterias: dateCriteria, // <-- büyük C ve s ile!
+    culture
+  };
+  const response = await fetch('http://localhost:8080/api/getreservationlist', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(requestBody)
+  });
+  if (!response.ok) throw new Error('Failed to fetch reservations');
+  const text = await response.text();
+  if (!text) return { body: { reservations: [] } };
+  return JSON.parse(text);
+}
+
+export async function getReservationDetail({ token, reservationNumber }: { token: string; reservationNumber: string }) {
+  const response = await fetch('http://localhost:8080/api/getreservationdetail', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ reservationNumber })
+  });
+  if (!response.ok) throw new Error('Failed to fetch reservation detail');
+  const text = await response.text();
+  if (!text) return {};
+  return JSON.parse(text);
+}

@@ -34,7 +34,7 @@ const BookingSuccessPage = () => {
           <span style={{ color: '#2563eb', fontWeight: 900, fontSize: 22 }}>{reservationNumber}</span>
         </div>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/my-reservations')}
           style={{
             background: 'linear-gradient(90deg, #16a34a 0%, #2563eb 100%)',
             color: 'white',
@@ -50,7 +50,7 @@ const BookingSuccessPage = () => {
             marginTop: 8
           }}
         >
-          Go Home
+          Go My Reservations
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark, FaArrowLeft } from 'react-icons/fa';
 import { setReservationInfo, commitTransaction } from '../api';
 
@@ -311,9 +311,9 @@ const BookingPage: React.FC = () => {
             <a href="#" className="nav-btn" onClick={e => { e.preventDefault(); navigate('/hotels'); }}>
               {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
             </a>
-            <a href="#" className="nav-btn">
+            <Link to="/find-reservation" className="nav-btn">
               {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -440,42 +440,52 @@ const BookingPage: React.FC = () => {
         {/* Traveller Information Form */}
         <form onSubmit={handleSubmit} style={{
           background: '#fff',
-          borderRadius: 16,
-          boxShadow: '0 4px 24px #1e3a8a11',
-          padding: '32px'
+          borderRadius: 20,
+          boxShadow: '0 6px 32px #2563eb18',
+          padding: 40,
+          maxWidth: 1000,
+          margin: '0 auto',
         }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 24px 0', color: '#1e3a8a' }}>
+          <h2 style={{ fontSize: 32, fontWeight: 900, margin: '0 0 32px 0', color: '#1e3a8a', letterSpacing: -1 }}>
             Traveller Information
           </h2>
 
           {travellers.map((traveller, index) => (
             <div key={index} style={{
               border: '2px solid #e0e7ff',
-              borderRadius: 12,
-              padding: '24px',
-              marginBottom: '24px',
-              backgroundColor: '#f8fafc'
+              borderRadius: 18,
+              padding: '40px',
+              marginBottom: '40px',
+              background: 'linear-gradient(135deg, #f8fafc 60%, #e0e7ff 100%)',
+              boxShadow: '0 2px 16px #2563eb0a',
+              maxWidth: 900,
+              margin: '0 auto 40px auto',
             }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 16px 0', color: '#2563eb' }}>
-                Traveller {index + 1} {traveller.isLeader ? '(Leader)' : ''}
+              <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 32px 0', color: '#2563eb', letterSpacing: -0.5 }}>
+                Traveller {index + 1} <span style={{ color: '#0ea5e9', fontWeight: 700 }}>{traveller.isLeader ? '(Leader)' : ''}</span>
               </h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 32,
+                alignItems: 'start',
+              }}>
                 {/* Title */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Title *
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Title *</label>
                   <select
                     value={traveller.title || ''}
                     onChange={(e) => handleTravellerChange(index, 'title', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px',
-                      backgroundColor: '#fff'
+                      padding: '12px 14px',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 10,
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                     required
                   >
@@ -484,123 +494,137 @@ const BookingPage: React.FC = () => {
                       <option key={title.id} value={title.id}>{title.name}</option>
                     ))}
                   </select>
-                  {errors[index]?.title && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].title}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.title}
+                  </div>
                 </div>
-
-                {/* Name */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    First Name *
-                  </label>
+                {/* First Name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>First Name *</label>
                   <input
                     type="text"
                     value={traveller.name || ''}
                     onChange={(e) => handleTravellerChange(index, 'name', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                     required
                   />
-                  {errors[index]?.name && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].name}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.name}
+                  </div>
                 </div>
-
-                {/* Surname */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Last Name *
-                  </label>
+                {/* Last Name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Last Name *</label>
                   <input
                     type="text"
                     value={traveller.surname || ''}
                     onChange={(e) => handleTravellerChange(index, 'surname', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                     required
                   />
-                  {errors[index]?.surname && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].surname}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.surname}
+                  </div>
                 </div>
-
                 {/* Email (only for leader) */}
                 {traveller.isLeader && (
-                  <div>
-                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                      Email *
-                    </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Email *</label>
                     <input
                       type="email"
                       value={traveller.email || ''}
                       onChange={(e) => handleTravellerChange(index, 'email', e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '12px',
-                        border: '2px solid #d1d5db',
-                        borderRadius: 8,
-                        fontSize: '16px'
+                        padding: '12px 14px',
+                        borderRadius: 10,
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: 16,
+                        background: '#f8fafc',
+                        outline: 'none',
+                        transition: 'border 0.2s',
+                        minHeight: 44
                       }}
                       required
                     />
-                    {errors[index]?.email && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].email}</div>}
+                    <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                      {errors[index]?.email}
+                    </div>
                   </div>
                 )}
-
                 {/* Phone (only for leader) */}
                 {traveller.isLeader && (
-                  <div>
-                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                      Phone *
-                    </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Phone *</label>
                     <input
                       type="tel"
                       value={traveller.phone || ''}
                       onChange={(e) => handleTravellerChange(index, 'phone', e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '12px',
-                        border: '2px solid #d1d5db',
-                        borderRadius: 8,
-                        fontSize: '16px'
+                        padding: '12px 14px',
+                        borderRadius: 10,
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: 16,
+                        background: '#f8fafc',
+                        outline: 'none',
+                        transition: 'border 0.2s',
+                        minHeight: 44
                       }}
                       required
                     />
-                    {errors[index]?.phone && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].phone}</div>}
+                    <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                      {errors[index]?.phone}
+                    </div>
                   </div>
                 )}
-
                 {/* Birth Date */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Birth Date *
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Birth Date *</label>
                   <input
                     type="date"
                     value={traveller.birthDate || ''}
                     onChange={(e) => handleTravellerChange(index, 'birthDate', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                     required
                   />
-                  {errors[index]?.birthDate && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].birthDate}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.birthDate}
+                  </div>
                 </div>
-
                 {/* Nationality */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Nationality *
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Nationality *</label>
                   <input
                     type="text"
                     value={traveller.nationality || ''}
@@ -608,54 +632,66 @@ const BookingPage: React.FC = () => {
                     placeholder="e.g., TR, US, DE"
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                     required
                   />
-                  {errors[index]?.nationality && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].nationality}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.nationality}
+                  </div>
                 </div>
-
                 {/* Passport Number */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Passport Number
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Passport Number</label>
                   <input
                     type="text"
                     value={traveller.passportNumber || ''}
                     onChange={(e) => handleTravellerChange(index, 'passportNumber', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                   />
-                  {errors[index]?.passportNumber && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].passportNumber}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.passportNumber}
+                  </div>
                 </div>
-
                 {/* Passport Expiry */}
-                <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#374151' }}>
-                    Passport Expiry Date
-                  </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <label style={{ fontWeight: 700, color: '#1e293b', fontSize: 15, marginBottom: 2, letterSpacing: 0.2 }}>Passport Expiry Date</label>
                   <input
                     type="date"
                     value={traveller.passportExpiry || ''}
                     onChange={(e) => handleTravellerChange(index, 'passportExpiry', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: '16px'
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 16,
+                      background: '#f8fafc',
+                      outline: 'none',
+                      transition: 'border 0.2s',
+                      minHeight: 44
                     }}
                   />
-                  {errors[index]?.passportExpiry && <div style={{color:'red', fontSize:13, marginTop:4}}>{errors[index].passportExpiry}</div>}
+                  <div style={{ minHeight: 18, color: '#ef4444', fontSize: 13, marginTop: 2, fontWeight: 500 }}>
+                    {errors[index]?.passportExpiry}
+                  </div>
                 </div>
               </div>
             </div>

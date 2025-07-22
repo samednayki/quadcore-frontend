@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
 import { FaSnowflake, FaUtensils, FaCar, FaGlassCheers, FaConciergeBell, FaExchangeAlt, FaHotel, FaLock, FaCouch, FaMapMarkerAlt, FaClock, FaCheckCircle, FaWifi, FaSwimmingPool, FaUmbrellaBeach, FaRegDotCircle } from 'react-icons/fa';
 import { getOffers, beginTransaction } from '../api';
@@ -618,9 +618,9 @@ const HotelDetailsPage: React.FC = () => {
             >
               {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
             </a>
-            <a href="#" className="nav-btn">
+            <Link to="/find-reservation" className="nav-btn">
               {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

@@ -6,6 +6,8 @@ import HotelList from './pages/HotelList';
 import HotelDetailsPage from './pages/HotelDetailsPage';
 import BookingPage from './pages/BookingPage';
 import BookingSuccessPage from './pages/BookingSuccessPage';
+import MyReservations from './pages/MyReservations';
+import ReservationDetailPage from './pages/ReservationDetailPage';
 
 const App: React.FC = () => {
   return (
@@ -17,6 +19,8 @@ const App: React.FC = () => {
           <Route path="/hotel-details/:id" element={<HotelDetailsPage />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking-success" element={<BookingSuccessPage />} />
+          <Route path="/my-reservations" element={<MyReservations />} />
+          <Route path="/reservation-detail/:reservationNumber" element={<ReservationDetailPage />} />
         </Routes>
       </Router>
     </AuthProvider>
