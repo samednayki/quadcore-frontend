@@ -50,12 +50,12 @@ const SearchPage: React.FC = () => {
   // Currency and nationality dropdown states
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [showNationalityDropdown, setShowNationalityDropdown] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState('TRY'); // Turkish Lira default
+  const [selectedCurrency, setSelectedCurrency] = useState('EUR'); // Euro default
   const [selectedNationality, setSelectedNationality] = useState('DE'); // Germany default
 
   // Search states for currency and nationality
-  const [currencySearch, setCurrencySearch] = useState('');
-  const [nationalitySearch, setNationalitySearch] = useState('');
+  const [currencySearch, setCurrencySearch] = useState('EUR');
+  const [nationalitySearch, setNationalitySearch] = useState('Germany');
 
   // Guest count states with limits
   const [adultCount, setAdultCount] = useState(1);
@@ -437,10 +437,10 @@ const SearchPage: React.FC = () => {
         setCurrencies(data.body?.currencies || []);
         setLoadingCurrency(false);
         
-        // Check if TRY exists in the currencies, if not, set to first available
+        // Check if EUR exists in the currencies, if not, set to first available
         if (data.body?.currencies) {
-          const tryCurrency = data.body.currencies.find((c: any) => c.code === 'TRY');
-          if (!tryCurrency && data.body.currencies.length > 0) {
+          const eurCurrency = data.body.currencies.find((c: any) => c.code === 'EUR');
+          if (!eurCurrency && data.body.currencies.length > 0) {
             setSelectedCurrency(data.body.currencies[0].code);
           }
         }
@@ -569,6 +569,15 @@ const SearchPage: React.FC = () => {
     setPendingChildAges([]);
   };
 
+  // Guests dropdown modal state
+  const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+
+  // Check-in ve check-out inputları için ref ekle
+  const checkInRef = useRef<HTMLInputElement | null>(null);
+  const checkOutRef = useRef<HTMLInputElement | null>(null);
+  const [checkInCalendarPos, setCheckInCalendarPos] = useState({ top: 0, left: 0, width: 0 });
+  const [checkOutCalendarPos, setCheckOutCalendarPos] = useState({ top: 0, left: 0, width: 0 });
+
   useEffect(() => {
     // Sayfa yüklendiğinde otomatik login yap
     performAutoLogin();
@@ -596,6 +605,29 @@ const SearchPage: React.FC = () => {
     }
   }, [showNationalityDropdown]);
 
+  // Check-in calendar açıldığında pozisyonu hesapla
+  useEffect(() => {
+    if (showCheckInCalendar && checkInRef.current) {
+      const rect = checkInRef.current.getBoundingClientRect();
+      setCheckInCalendarPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [showCheckInCalendar]);
+  // Check-out calendar açıldığında pozisyonu hesapla
+  useEffect(() => {
+    if (showCheckOutCalendar && checkOutRef.current) {
+      const rect = checkOutRef.current.getBoundingClientRect();
+      setCheckOutCalendarPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [showCheckOutCalendar]);
+
   // Search form submit handler
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -622,16 +654,26 @@ const SearchPage: React.FC = () => {
       return;
     }
 
+    if (!currencySearch || currencySearch.trim() === '') {
+      setSearchError('Please select a currency');
+      return;
+    }
+    if (!nationalitySearch || nationalitySearch.trim() === '') {
+      setSearchError('Please select a nationality');
+      return;
+    }
+
     // Prepare search parameters
     const searchParams = {
       destination: selectedDestination.id,
       destinationName: selectedDestination.name,
+      destinationType: selectedDestination.type,
       checkIn: selectedCheckInDate,
       checkOut: selectedCheckOutDate,
       guests: getTotalGuests(),
       rooms: rooms.length,
-      currency: selectedCurrency,
-      nationality: selectedNationality,
+      currency: currencySearch,
+      nationality: nationalitySearch, // nationalitySearch'e ülke kodu atanacak
       roomDetails: rooms.map(room => ({
         adults: room.adults,
         children: room.children,
@@ -700,129 +742,274 @@ const SearchPage: React.FC = () => {
             <img src={logoUrl} alt="HotelRes Logo" className="app-logo" />
             <span className="app-title">HotelRes</span>
           </div>
-          <nav className="nav-links">
+          <nav className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24, justifyContent: 'flex-end', width: '100%' }}>
+            {/* Currency & Nationality dropdowns önce gelsin */}
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginRight: 32 }}>
+              {/* Currency Dropdown */}
+              <div ref={currencyRef} style={{ position: 'relative', minWidth: 120 }}>
+                <input
+                  type="text"
+                  value={currencySearch}
+                  onChange={e => {
+                    setCurrencySearch(e.target.value);
+                    setShowCurrencyDropdown(true);
+                    setShowNationalityDropdown(false);
+                    setShowAutocomplete(false);
+                  }}
+                  onFocus={() => setShowCurrencyDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowCurrencyDropdown(false), 200)}
+                  placeholder="Currency"
+                  style={{
+                    border: '1.5px solid #bbdefb',
+                    borderRadius: '12px',
+                    padding: '0.5rem 1.2rem',
+                    background: '#fff',
+                    width: 100,
+                    fontWeight: 500,
+                    fontSize: '1rem',
+                    color: '#232931',
+                    marginRight: 8
+                  }}
+                />
+                <span style={{ marginLeft: 4, color: '#888', fontSize: 16, userSelect: 'none', cursor: 'pointer' }} onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}>▼</span>
+                {showCurrencyDropdown && createPortal(
+                  <div
+                    className="custom-select-dropdown"
+                    style={{
+                      position: 'absolute',
+                      top: currencyDropdownPos.top,
+                      left: currencyDropdownPos.left,
+                      width: currencyDropdownPos.width,
+                      zIndex: 9999,
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+                      maxHeight: '300px',
+                      overflow: 'auto',
+                      marginTop: 0
+                    }}
+                  >
+                    <div className="dropdown-items-container">
+                      {currencies
+                        .filter(currency =>
+                          currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
+                          currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
+                        )
+                        .map(currency => (
+                          <div
+                            key={currency.code}
+                            className="custom-select-item"
+                            onMouseDown={e => {
+                e.preventDefault();
+                              setSelectedCurrency(currency.code);
+                              setCurrencySearch(currency.name);
+                              setShowCurrencyDropdown(false);
+                            }}
+                          >
+                            <div className="select-item-icon">💵</div>
+                            <div className="select-item-content">
+                              <div className="select-item-title">{currency.name}</div>
+                              <div className="select-item-subtitle">{currency.code}</div>
+                            </div>
+                          </div>
+                        ))}
+                      {currencies.filter(currency =>
+                        currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
+                        currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
+                      ).length === 0 && (
+                        <div className="dropdown-no-results">
+                          <div className="no-results-icon">🔍</div>
+                          <div className="no-results-text">No currencies found</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>,
+                  document.body
+                )}
+              </div>
+              {/* Nationality Dropdown */}
+              <div ref={nationalityRef} style={{ position: 'relative', minWidth: 120 }}>
+                <input
+                  type="text"
+                  value={nationalitySearch}
+                  onChange={e => {
+                    setNationalitySearch(e.target.value);
+                    setShowNationalityDropdown(true);
+                    setShowCurrencyDropdown(false);
+                    setShowAutocomplete(false);
+                  }}
+                  onFocus={() => setShowNationalityDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowNationalityDropdown(false), 200)}
+                  placeholder="Nationality"
+                  style={{
+                    border: '1.5px solid #bbdefb',
+                    borderRadius: '12px',
+                    padding: '0.5rem 1.2rem',
+                    background: '#fff',
+                    width: 100,
+                    fontWeight: 500,
+                    fontSize: '1rem',
+                    color: '#232931',
+                  }}
+                />
+                <span style={{ marginLeft: 4, color: '#888', fontSize: 16, userSelect: 'none', cursor: 'pointer' }} onClick={() => setShowNationalityDropdown(!showNationalityDropdown)}>▼</span>
+                {showNationalityDropdown && createPortal(
+                  <div
+                    className="custom-select-dropdown"
+          style={{
+                      position: 'absolute',
+                      top: nationalityDropdownPos.top,
+                      left: nationalityDropdownPos.left,
+                      width: nationalityDropdownPos.width,
+                      zIndex: 9999,
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+                      maxHeight: '300px',
+                      overflow: 'auto',
+                      marginTop: 0
+                    }}
+                  >
+                    <div className="dropdown-items-container">
+                      {nationalities
+                        .filter(nationality =>
+                          nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
+                          nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
+                        )
+                        .map(nationality => (
+                          <div
+                            key={nationality.id}
+                            className="custom-select-item"
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setSelectedNationality(nationality.id);
+                              setNationalitySearch(nationality.id); // KODU ata
+                              setShowNationalityDropdown(false);
+                            }}
+                          >
+                            <div className="select-item-icon">{getCountryFlag(nationality.id)}</div>
+                            <div className="select-item-content">
+                              <div className="select-item-title">{nationality.name}</div>
+                </div>
+              </div>
+                        ))}
+                      {nationalities.filter(nationality =>
+                        nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
+                        nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
+                      ).length === 0 && (
+                        <div className="dropdown-no-results">
+                          <div className="no-results-icon">🔍</div>
+                          <div className="no-results-text">No nationalities found</div>
+            </div>
+                      )}
+                  </div>
+                  </div>,
+                  document.body
+                )}
+              </div>
+            </div>
+            {/* Nav linkler sağda */}
             <a href="#" className="nav-link nav-box">{FaHome({ className: "nav-icon" })}<span className="nav-text">Home</span></a>
             <a href="#" className="nav-link nav-box">{FaBookmark({ className: "nav-icon" })}<span className="nav-text">My Reservations</span></a>
           </nav>
         </header>
         <div
-          className="search-page-outer"
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-          }}
+          style={{ position: 'relative', zIndex: 1, minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div className="search-card search-card-v2" style={{ marginTop: '32px' }}>
-              <form className="search-form-v2" onSubmit={handleSearchSubmit}>
-                <h2 className="search-title-v2" style={{ fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontWeight: 600, letterSpacing: 0.01 }}>Where do you want to go?</h2>
-                {searchError && (
-                  <div className="search-error-message">
-                    <span className="error-icon">⚠️</span>
-                    {searchError}
-                  </div>
-                )}
-                <div className="destination-row-v2" style={{
-                  border: '1.5px solid #bbdefb',
-                  borderRadius: '16px',
-                  padding: '0.7rem 1.2rem',
-                  background: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}>
-                  <span className="destination-icon-v2" style={{ marginRight: 8 }}>📍</span>
+          <form
+            className="searchbar-unified"
+            onSubmit={handleSearchSubmit}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(255,255,255,0.98)',
+              borderRadius: 32,
+              boxShadow: '0 10px 36px 0 rgba(30, 58, 138, 0.13)',
+              minHeight: 80,
+              maxWidth: 1600,
+              width: '100%',
+              padding: 0,
+              gap: 0,
+              overflow: 'visible',
+            }}
+          >
+            {/* Destination */}
+            <div style={{ flex: 2, minWidth: 320, maxWidth: 600, display: 'flex', alignItems: 'center', position: 'relative', background: 'none', borderRight: '1.5px solid #e0e7ef', height: 80 }}>
+              <span style={{ position: 'absolute', left: 22, fontSize: 26, color: '#2563eb', zIndex: 2 }}>📍</span>
                   <input 
-                    className="destination-input-v2" 
+                className="searchbar-input"
                     type="text" 
-                    placeholder="City, hotel or destination"
+                placeholder="Destination"
                     value={destinationQuery}
-                    onChange={(e) => {
+                onChange={e => {
                       setDestinationQuery(e.target.value);
                       fetchAutocomplete(e.target.value);
                     }}
                     onFocus={() => {
-                      if (destinationQuery.length >= 3) {
-                        setShowAutocomplete(true);
-                      }
+                  if (destinationQuery.length >= 3) setShowAutocomplete(true);
                       setShowCurrencyDropdown(false);
                       setShowNationalityDropdown(false);
                     }}
-                    onBlur={() => {
-                      setTimeout(() => setShowAutocomplete(false), 300);
-                    }}
-                    style={{
-                      border: 'none',
-                      outline: 'none',
-                      background: 'transparent',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      fontWeight: 400,
-                      fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
-                      fontSize: '1.08rem'
-                    }}
-                  />
-                  {loadingAutocomplete && (
-                    <div className="autocomplete-loading">⏳</div>
-                  )}
+                onBlur={() => setTimeout(() => setShowAutocomplete(false), 300)}
+                style={{
+                  width: '100%',
+                  height: 80,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'none',
+                  fontWeight: 700,
+                  fontSize: '1.32rem',
+                  color: '#232931',
+                  padding: '0 1.6rem 0 3.2rem',
+                  borderRadius: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              />
+              {loadingAutocomplete && <div className="autocomplete-loading">⏳</div>}
                   {showAutocomplete && (
                     <div className="autocomplete-dropdown">
                       {autocompleteResults.length > 0 ? (
                         autocompleteResults.map((item, index) => (
-                          <div 
-                            key={index} 
-                            className="autocomplete-item"
-                                                    onClick={() => {
+                      <div key={index} className="autocomplete-item" onClick={() => {
                             let displayText = '';
                             let destinationId = '';
-                            let destinationType = 0;
+                            let destinationType = 2;
                             let destinationName = '';
                             if (item.hotel) {
                               displayText = `${item.hotel.name}, ${item.city?.name || ''}, ${item.country?.name || ''}`;
                               destinationId = item.hotel.id;
-                              destinationType = item.type;
+                              destinationType = 1; // Otel için 1
                               destinationName = item.hotel.name;
                             } else if (item.city) {
                               displayText = `${item.city.name}, ${item.state?.name || ''}, ${item.country?.name || ''}`;
                               destinationId = item.city.id;
-                              destinationType = item.type;
+                              destinationType = 2; // Şehir için 2
                               destinationName = item.city.name;
                             } else if (item.state) {
                               displayText = `${item.state.name}, ${item.country?.name || ''}`;
                               destinationId = item.state.id;
-                              destinationType = item.type;
+                              destinationType = 2;
                               destinationName = item.state.name;
                             } else if (item.country) {
                               displayText = item.country.name;
                               destinationId = item.country.id;
-                              destinationType = item.type;
+                              destinationType = 2;
                               destinationName = item.country.name;
                             }
                             setDestinationQuery(displayText);
-                            setSelectedDestination({
-                              id: destinationId,
-                              type: destinationType,
-                              name: destinationName
-                            });
+                        setSelectedDestination({ id: destinationId, type: destinationType, name: destinationName });
                             setShowAutocomplete(false);
-                            if (destinationId && destinationType) {
-                              fetchCheckInDates(destinationId, destinationType);
-                            }
-                          }}
-                          >
-                            <div className="autocomplete-icon">
-                              {item.hotel ? '🏨' : '📍'}
-                            </div>
+                        if (destinationId && destinationType) fetchCheckInDates(destinationId, destinationType);
+                      }}>
+                        <div className="autocomplete-icon">{item.hotel ? '🏨' : '📍'}</div>
                             <div className="autocomplete-content">
-                              <div className="autocomplete-title">
-                                {item.hotel ? item.hotel.name : (item.city ? item.city.name : (item.state ? item.state.name : item.country?.name))}
-                              </div>
-                              <div className="autocomplete-subtitle">
-                                {item.city && item.city.name !== (item.hotel ? item.hotel.name : item.state?.name) && `${item.city.name}, `}
-                                {item.state && item.state.name !== item.country?.name && `${item.state.name}, `}
-                                {item.country?.name}
-                              </div>
+                          <div className="autocomplete-title">{item.hotel ? item.hotel.name : (item.city ? item.city.name : (item.state ? item.state.name : item.country?.name))}</div>
+                          <div className="autocomplete-subtitle">{item.city && item.city.name !== (item.hotel ? item.hotel.name : item.state?.name) && `${item.city.name}, `}{item.state && item.state.name !== item.country?.name && `${item.state.name}, `}{item.country?.name}</div>
                             </div>
                           </div>
                         ))
@@ -835,41 +1022,34 @@ const SearchPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="dates-row-v2">
-                  <div className="date-col-v2">
-                    <label className="date-label-v2">
-                      {FaCalendarAlt({ className: "date-icon-v2" })}
-                      <span style={{ fontWeight: 600, fontSize: '1.08rem', fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, marginLeft: 6 }}>Check-in</span>
-                      {loadingCheckIn && <span className="loading-indicator"> ⏳</span>}
-                    </label>
-                    <div className="calendar-input-container">
+            {/* Check-in */}
+            <div style={{ flex: 1, minWidth: 220, maxWidth: 400, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, overflow: 'visible', position: 'relative' }}>
                       <input 
-                        className="date-input-v2" 
+                ref={checkInRef}
+                className="searchbar-input"
                         type="text"
-                        placeholder={
-                          !selectedDestination 
-                            ? 'Select destination first' 
-                            : loadingCheckIn 
-                              ? 'Loading available dates...' 
-                              : availableDates.length > 0 
-                                ? 'Select check-in date' 
-                                : 'No dates available'
-                        }
-                        value={selectedCheckInDate ? new Date(selectedCheckInDate).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        }) : ''}
+                placeholder="Check-in"
+                value={selectedCheckInDate ? new Date(selectedCheckInDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
                         readOnly
                         disabled={!selectedDestination || loadingCheckIn}
                         onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
-                        style={{ fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}
-                      />
-                    </div>
-                    
-                    {showCheckInCalendar && (
-                      <div className="calendar-widget">
+                style={{
+                  width: '100%',
+                  height: 80,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'none',
+                  fontWeight: 700,
+                  fontSize: '1.32rem',
+                  color: '#232931',
+                  padding: '0 1.6rem',
+                  borderRadius: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              />
+              {showCheckInCalendar && createPortal(
+                <div className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkInCalendarPos.top, left: checkInCalendarPos.left, width: checkInCalendarPos.width, background: '#fff' }}>
                         <div className="calendar-header">
                           <button 
                             type="button" 
@@ -937,43 +1117,38 @@ const SearchPage: React.FC = () => {
                             Today
                           </button>
                         </div>
-                      </div>
-                    )}
-                    
-                    {checkInError && (
-                      <div className="error-message">{checkInError}</div>
-                    )}
-                    
-
+                  </div>,
+                  document.body
+                )}
                   </div>
-                  <div className="date-col-v2">
-                    <label className="date-label-v2">
-                      {FaCalendarAlt({ className: "date-icon-v2" })}
-                      <span style={{ fontWeight: 600, fontSize: '1.08rem', fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, marginLeft: 6 }}>Check-out</span>
-                    </label>
-                    <div className="calendar-input-container">
+            {/* Check-out */}
+            <div style={{ flex: 1, minWidth: 220, maxWidth: 400, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, overflow: 'visible', position: 'relative' }}>
                       <input
-                        className="date-input-v2"
+                ref={checkOutRef}
+                className="searchbar-input"
                         type="text"
-                        placeholder={
-                          !selectedCheckInDate
-                            ? 'Select check-in first'
-                            : 'Select check-out date'
-                        }
-                        value={selectedCheckOutDate ? new Date(selectedCheckOutDate).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        }) : ''}
+                placeholder="Check-out"
+                value={selectedCheckOutDate ? new Date(selectedCheckOutDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
                         readOnly
                         disabled={!selectedCheckInDate}
                         onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
-                        style={{ fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}
-                      />
-                    </div>
-                    {showCheckOutCalendar && (
-                      <div className="calendar-widget">
+                style={{
+                  width: '100%',
+                  height: 80,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'none',
+                  fontWeight: 700,
+                  fontSize: '1.32rem',
+                  color: '#232931',
+                  padding: '0 1.6rem',
+                  borderRadius: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              />
+              {showCheckOutCalendar && createPortal(
+                <div className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkOutCalendarPos.top, left: checkOutCalendarPos.left, width: checkOutCalendarPos.width, background: '#fff' }}>
                         <div className="calendar-header">
                           <button
                             type="button"
@@ -1038,474 +1213,112 @@ const SearchPage: React.FC = () => {
                             Today
                           </button>
                         </div>
-                      </div>
+                  </div>,
+                  document.body
                     )}
                   </div>
-                </div>
-                <div className="guests-section-v2">
-                  <div className="guests-header-v2" style={{ fontSize: '1.35rem', fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, color: '#232931' }}>
-                    Guests
-                  </div>
-                  <div className="guests-rooms-box-v2" style={{ background: 'none', boxShadow: 'none', border: 'none', padding: 0 }}>
-                    {rooms.map((room, index) => (
-                      <div key={room.id} style={{
-                        background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-                        border: '1.5px solid #bbdefb',
-                        borderRadius: '16px',
-                        padding: '1.5rem 1.2rem',
-                        marginBottom: '1.2rem',
-                        boxShadow: '0 2px 8px rgba(33,150,243,0.07)',
-                        position: 'relative'
-                      }}>
-                        {/* Sol üstte oda silme butonu */}
-                            {rooms.length > 1 && (
-                              <button 
-                                type="button" 
-                                onClick={() => removeRoom(room.id)}
-                            style={{
-                              position: 'absolute',
-                              top: -12,
-                              left: -12,
-                              width: 32,
-                              height: 32,
-                              borderRadius: '50%',
-                              background: '#424242',
-                              color: '#fff',
-                              border: '2px solid #fff',
-                              opacity: 0.85,
-                              fontSize: 20,
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s ease',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                              zIndex: 2
-                            }}
-                            title="Remove room"
-                            onMouseOver={e => {
-                              e.currentTarget.style.opacity = '1';
-                              e.currentTarget.style.transform = 'scale(1.1)';
-                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
-                            }}
-                            onMouseOut={e => {
-                              e.currentTarget.style.opacity = '0.85';
-                              e.currentTarget.style.transform = 'scale(1)';
-                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-                            }}
-                          >
-                            &minus;
+            {/* Guests (summary, açılır modal) */}
+            <div style={{ flex: 1.2, minWidth: 220, maxWidth: 340, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, position: 'relative' }}>
+              <button type="button" className="searchbar-input" style={{
+                width: '100%',
+                height: 80,
+                border: 'none',
+                outline: 'none',
+                background: 'none',
+                fontWeight: 700,
+                fontSize: '1.32rem',
+                color: '#232931',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderRadius: 0,
+                padding: '0 1.6rem',
+              }} onClick={() => setShowGuestsDropdown(true)}>
+                <span>{getTotalGuests()} Guest{getTotalGuests() > 1 ? 's' : ''}, {rooms.length} Room{rooms.length > 1 ? 's' : ''}</span>
+                <span style={{ fontSize: 26, color: '#2563eb', marginLeft: 10 }}>▼</span>
                               </button>
+              {showGuestsDropdown && (
+                <div style={{ position: 'absolute', top: 76, left: 0, zIndex: 100, background: '#fff', border: '1.5px solid #e0e7ef', borderRadius: 12, boxShadow: '0 8px 32px #2563eb22', padding: 18, minWidth: 260 }}>
+                  {rooms.map((room, index) => (
+                    <div key={room.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
+                      <span style={{ fontWeight: 700 }}>Room {index + 1}:</span>
+                      <span>Adults</span>
+                      <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)} disabled={room.adults <= 1} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700, marginLeft: 2 }}>-</button>
+                      <span style={{ fontWeight: 700 }}>{room.adults}</span>
+                      <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults + 1)} disabled={room.adults >= MAX_ADULTS} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700 }}>+</button>
+                      <span>Children</span>
+                      <button type="button" onClick={() => updateRoomGuests(room.id, 'children', room.children - 1)} disabled={room.children <= 0} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700, marginLeft: 2 }}>-</button>
+                      <span style={{ fontWeight: 700 }}>{room.children}</span>
+                      <button type="button" onClick={() => openChildAgeModal(room.id, room.children + 1, room.childAges)} disabled={room.children >= MAX_CHILDREN} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700 }}>+</button>
+                      {/* Remove Room butonu, ilk oda hariç */}
+                      {rooms.length > 1 && index > 0 && (
+                        <button type="button" onClick={() => removeRoom(room.id)} style={{ marginLeft: 8, background: '#ff5252', color: '#fff', border: 'none', borderRadius: 8, width: 28, height: 28, fontWeight: 900, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                             )}
-                        <div className="room-row-v2">
-                          <span className="room-row-label-v2" style={{ fontSize: '1.18rem', fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>
-                            Adult
-                          </span>
-                          <div className="room-row-controls-v2">
-                            <button 
-                              type="button" 
-                              className={`plain-icon-btn ${room.adults <= 1 ? 'disabled' : ''}`}
-                              onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)}
-                              disabled={room.adults <= 1}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                color: '#fff',
-                                fontSize: '2.3rem',
-                                fontWeight: 800,
-                                width: 40,
-                                height: 40,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                transition: 'color 0.2s, text-shadow 0.2s',
-                                cursor: room.adults <= 1 ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: room.adults <= 1 ? 0.4 : 1,
-                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
-                              }}
-                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
-                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
-                            >
-                              &minus;
-                            </button>
-                            <span className="room-count-v2">{room.adults}</span>
-                            <button 
-                              type="button" 
-                              className={`plain-icon-btn ${room.adults >= MAX_ADULTS ? 'disabled' : ''}`}
-                              onClick={() => updateRoomGuests(room.id, 'adults', room.adults + 1)}
-                              disabled={room.adults >= MAX_ADULTS}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                color: '#fff',
-                                fontSize: '2.3rem',
-                                fontWeight: 800,
-                                width: 40,
-                                height: 40,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                transition: 'color 0.2s, text-shadow 0.2s',
-                                cursor: room.adults >= MAX_ADULTS ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: room.adults >= MAX_ADULTS ? 0.4 : 1,
-                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
-                              }}
-                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
-                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
-                            >
-                              +
-                            </button>
                           </div>
-                        </div>
-                        <div className="room-row-v2">
-                          <span className="room-row-label-v2" style={{ fontSize: '1.18rem', fontWeight: 400, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>
-                            Children <span className="room-row-age-v2">[0-17]</span>
-                          </span>
-                          <div className="room-row-controls-v2">
-                            <button 
-                              type="button" 
-                              className={`plain-icon-btn ${room.children <= 0 ? 'disabled' : ''}`}
-                              onClick={() => updateRoomGuests(room.id, 'children', room.children - 1)}
-                              disabled={room.children <= 0}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                color: '#fff',
-                                fontSize: '2.3rem',
-                                fontWeight: 800,
-                                width: 40,
-                                height: 40,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                transition: 'color 0.2s, text-shadow 0.2s',
-                                cursor: room.children <= 0 ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: room.children <= 0 ? 0.4 : 1,
-                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
-                              }}
-                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
-                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
-                            >
-                              &minus;
-                            </button>
-                            <span className="room-count-v2">{room.children}</span>
-                            <button 
-                              type="button" 
-                              className={`plain-icon-btn ${room.children >= MAX_CHILDREN ? 'disabled' : ''}`}
-                              onClick={() => openChildAgeModal(room.id, room.children + 1, room.childAges)}
-                              disabled={room.children >= MAX_CHILDREN}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                boxShadow: 'none',
-                                color: '#fff',
-                                fontSize: '2.3rem',
-                                fontWeight: 800,
-                                width: 40,
-                                height: 40,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                transition: 'color 0.2s, text-shadow 0.2s',
-                                cursor: room.children >= MAX_CHILDREN ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: room.children >= MAX_CHILDREN ? 0.4 : 1,
-                                textShadow: '0 0 8px #fff, 0 0 2px #1976d2'
-                              }}
-                              onMouseOver={e => { e.currentTarget.style.textShadow = '0 0 16px #fff, 0 0 4px #1976d2'; }}
-                              onMouseOut={e => { e.currentTarget.style.textShadow = '0 0 8px #fff, 0 0 2px #1976d2'; }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                        {/* Çocuk yaşları ana ekranda hiçbir zaman gösterilmeyecek */}
-                        {index < rooms.length - 1 && <div className="room-divider-v2"></div>}
-                      </div>
-                    ))}
-                  </div>
-                  <button 
-                    type="button" 
-                    className={`add-room-btn-v2 ${rooms.length >= MAX_ROOMS ? 'disabled' : ''}`}
-                    style={{
-                      padding: '0.4rem 1rem',
-                      fontSize: '0.98rem',
-                      minHeight: '32px',
-                      border: '1.5px solid #bbdefb',
-                      background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-                      color: '#1976d2',
-                      borderRadius: '8px',
-                      fontWeight: 500,
-                      marginTop: '0.5rem',
-                      marginBottom: '0.5rem',
-                      boxShadow: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      cursor: rooms.length >= MAX_ROOMS ? 'not-allowed' : 'pointer',
-                      opacity: rooms.length >= MAX_ROOMS ? 0.6 : 1
-                    }}
-                    onClick={addRoom}
-                    disabled={rooms.length >= MAX_ROOMS}
-                  >
-                    {FaPlus({})} Add Room
-                  </button>
-                  <div className="total-guests-v2">
+                  ))}
+                  <button type="button" onClick={addRoom} disabled={rooms.length >= MAX_ROOMS} style={{ marginTop: 8, fontWeight: 700, color: '#2563eb', background: '#e0e7ef', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 15, cursor: rooms.length >= MAX_ROOMS ? 'not-allowed' : 'pointer', opacity: rooms.length >= MAX_ROOMS ? 0.5 : 1 }}>+ Add Room</button>
+                  <div style={{ marginTop: 12, fontWeight: 900, color: '#334155', background: '#f1f5f9', borderRadius: 10, padding: '10px 18px', fontSize: 16, boxShadow: '0 1px 4px #2563eb0a' }}>
                     Total: {getTotalGuests()} Guests, {rooms.length} Room{rooms.length > 1 ? 's' : ''}
-                  </div>
-                </div>
-                <div className="bottom-row-v2">
-                  <div className="currency-col-v2">
-                    <label className="currency-label-v2" style={{ fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontSize: '1.08rem', color: '#444', marginBottom: 8 }}>Currency</label>
-                    <div
-                      ref={currencyRef}
-                      style={{
-                        border: '1.5px solid #bbdefb',
-                        borderRadius: '16px',
-                        padding: '0.7rem 1.2rem',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        position: 'relative'
-                      }}
-                    >
-                      <input
-                        type="text"
-                        value={currencySearch}
-                        onChange={e => {
-                          setCurrencySearch(e.target.value);
-                          setShowCurrencyDropdown(true);
-                          setShowNationalityDropdown(false);
-                          setShowAutocomplete(false);
-                        }}
-                        onFocus={() => setShowCurrencyDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowCurrencyDropdown(false), 200)}
-                        placeholder="Currency"
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          background: 'transparent',
-                          width: '100%',
-                          fontWeight: 400,
-                          fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
-                          fontSize: '1.08rem',
-                          color: '#232931'
-                        }}
-                      />
-                      <span
-                        style={{
-                          marginLeft: 8,
-                          color: '#888',
-                          fontSize: 18,
-                          userSelect: 'none',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
-                      >
-                        ▼
-                      </span>
-                      {showCurrencyDropdown && createPortal(
-                        <div
-                          className="custom-select-dropdown"
-                          style={{
-                            position: 'absolute',
-                            top: currencyDropdownPos.top,
-                            left: currencyDropdownPos.left,
-                            width: currencyDropdownPos.width,
-                            zIndex: 9999,
-                            backgroundColor: 'white',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                            maxHeight: '300px',
-                            overflow: 'auto',
-                            marginTop: 0
-                          }}
-                        >
-                          <div className="dropdown-items-container">
-                            {currencies
-                              .filter(currency =>
-                                currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
-                                currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
-                              )
-                              .map(currency => (
-                                <div
-                                  key={currency.code}
-                                  className="custom-select-item"
-                                  onMouseDown={e => {
-                                    e.preventDefault();
-                                    setSelectedCurrency(currency.code);
-                                    setCurrencySearch(currency.name);
-                                    setShowCurrencyDropdown(false);
-                                  }}
-                                >
-                                  <div className="select-item-icon">💵</div>
-                                  <div className="select-item-content">
-                                    <div className="select-item-title">{currency.name}</div>
-                                    <div className="select-item-subtitle">{currency.code}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            {currencies.filter(currency =>
-                              currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
-                              currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
-                            ).length === 0 && (
-                              <div className="dropdown-no-results">
-                                <div className="no-results-icon">🔍</div>
-                                <div className="no-results-text">No currencies found</div>
-                              </div>
-                            )}
+                        </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                    <button type="button" onClick={() => setShowGuestsDropdown(false)} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 32px', fontWeight: 800, fontSize: 18, cursor: 'pointer' }}>Done</button>
                           </div>
-                        </div>,
-                        document.body
-                      )}
-                    </div>
-                  </div>
-                  <div className="nationality-col-v2">
-                    <label className="nationality-label-v2" style={{ fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, fontSize: '1.08rem', color: '#444', marginBottom: 8 }}>Nationality</label>
-                    <div
-                      ref={nationalityRef}
-                      style={{
-                        border: '1.5px solid #bbdefb',
-                        borderRadius: '16px',
-                        padding: '0.7rem 1.2rem',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        position: 'relative'
-                      }}
-                    >
-                      <input
-                        type="text"
-                        value={nationalitySearch}
-                        onChange={e => {
-                          setNationalitySearch(e.target.value);
-                          setShowNationalityDropdown(true);
-                          setShowCurrencyDropdown(false);
-                          setShowAutocomplete(false);
-                        }}
-                        onFocus={() => setShowNationalityDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowNationalityDropdown(false), 200)}
-                        placeholder="Nationality"
-                        style={{
-                          border: 'none',
-                          outline: 'none',
-                          background: 'transparent',
-                          width: '100%',
-                          fontWeight: 400,
-                          fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`,
-                          fontSize: '1.08rem',
-                          color: '#232931'
-                        }}
-                      />
-                      <span
-                        style={{
-                          marginLeft: 8,
-                          color: '#888',
-                          fontSize: 18,
-                          userSelect: 'none',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setShowNationalityDropdown(!showNationalityDropdown)}
-                      >
-                        ▼
-                      </span>
-                      {showNationalityDropdown && createPortal(
-                        <div
-                          className="custom-select-dropdown"
-                          style={{
-                            position: 'absolute',
-                            top: nationalityDropdownPos.top,
-                            left: nationalityDropdownPos.left,
-                            width: nationalityDropdownPos.width,
-                            zIndex: 9999,
-                            backgroundColor: 'white',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                            maxHeight: '300px',
-                            overflow: 'auto',
-                            marginTop: 0
-                          }}
-                        >
-                          <div className="dropdown-items-container">
-                            {nationalities
-                              .filter(nationality =>
-                                nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
-                                nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
-                              )
-                              .map(nationality => (
-                                <div
-                                  key={nationality.id}
-                                  className="custom-select-item"
-                                  onMouseDown={e => {
-                                    e.preventDefault();
-                                    setSelectedNationality(nationality.id);
-                                    setNationalitySearch(nationality.name);
-                                    setShowNationalityDropdown(false);
-                                  }}
-                                >
-                                  <div className="select-item-icon">{getCountryFlag(nationality.id)}</div>
-                                  <div className="select-item-content">
-                                    <div className="select-item-title">{nationality.name}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            {nationalities.filter(nationality =>
-                              nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
-                              nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
-                            ).length === 0 && (
-                              <div className="dropdown-no-results">
-                                <div className="no-results-icon">🔍</div>
-                                <div className="no-results-text">No nationalities found</div>
-                              </div>
-                            )}
+                        </div>
+              )}
                           </div>
-                        </div>,
-                        document.body
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" className="search-btn-v2" style={{
-                  padding: '1.25rem 2rem',
-                  background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-                  color: '#1976d2',
-                  border: '1.5px solid #bbdefb',
-                  borderRadius: '16px',
-                  fontSize: '1.4rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  marginTop: '1rem',
-                  boxShadow: '0 2px 8px rgba(33,150,243,0.07)'
-                }}>
-                  {FaSearch({ className: "search-btn-icon-v2" })} Search Hotels
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
+            {/* Search Button */}
+            <div style={{
+              flex: 0.9,
+              minWidth: 220,
+              maxWidth: 260,
+              display: 'flex',
+              alignItems: 'stretch', // stretch ile tam hizalama
+              justifyContent: 'center',
+              height: 80,
+              minHeight: 80,
+              maxHeight: 80,
+              background: '#fff',
+              borderRadius: 0,
+              borderTopRightRadius: 32,
+              borderBottomRightRadius: 32,
+              boxShadow: 'none',
+              margin: 0,
+              padding: 0
+            }}>
+                                    <button 
+                type="submit"
+                className="search-btn-v2"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  minHeight: 80,
+                  maxHeight: 80,
+                  fontSize: '1.32rem',
+                  borderRadius: 0,
+                  borderTopRightRadius: 32,
+                  borderBottomRightRadius: 32,
+                  background: 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
+                  color: '#fff',
+                  fontWeight: 900,
+                  boxShadow: 'none',
+                  border: 'none',
+                  margin: 0,
+                  padding: 0,
+                  letterSpacing: 1,
+                  display: 'block',
+                  lineHeight: '80px', // tam ortalama
+                  verticalAlign: 'middle',
+                  textAlign: 'center',
+                }}
+              >
+                Search Hotels
+                                    </button>
+                                  </div>
+          </form>
+                                </div>
+                            </div>
       {/* Çocuk yaş modalı */}
       {showChildAgeModal && (
         <div className="child-age-modal-overlay" style={{ position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1518,14 +1331,14 @@ const SearchPage: React.FC = () => {
                   <button type="button" style={{ background: '#ff5252', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age - 1)} disabled={age <= 0}>-</button>
                   <span style={{ fontWeight: 600, fontSize: 18, color: '#e65100', minWidth: 24, textAlign: 'center' }}>{age}</span>
                   <button type="button" style={{ background: '#4caf50', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age + 1)} disabled={age >= 17}>+</button>
-            </div>
-          </div>
-            ))}
+                          </div>
+                      </div>
+                    ))}
             {/* Add Child butonu */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
-              <button
-                type="button"
-                style={{
+                  <button 
+                    type="button" 
+                          style={{
                   background: '#4caf50',
                   color: '#fff',
                   border: 'none',
@@ -1545,14 +1358,14 @@ const SearchPage: React.FC = () => {
                 {FaPlus({})}
               </button>
               <span style={{ fontWeight: 500, color: '#4caf50', fontSize: 16 }}>Add Child</span>
-            </div>
+                          </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 18 }}>
               <button type="button" style={{ background: '#ececec', color: '#232931', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 500, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={() => setShowChildAgeModal(false)}>Cancel</button>
               <button type="button" style={{ background: '#ff9800', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={saveChildAges}>Save</button>
-            </div>
-          </div>
-        </div>
-      )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
       <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
         <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
           <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -1563,8 +1376,8 @@ const SearchPage: React.FC = () => {
               <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Facebook</a>
               <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Instagram</a>
               <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Twitter</a>
-            </div>
-          </div>
+                          </div>
+                    </div>
           <div className="footer-section">
             <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Quick Access</h4>
             <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>

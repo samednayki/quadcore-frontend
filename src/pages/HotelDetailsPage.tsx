@@ -701,8 +701,8 @@ const HotelDetailsPage: React.FC = () => {
                   }}>
                     See +{images.length - 4} photos
                   </div>
-                )}
-              </div>
+            )}
+          </div>
             );
           })}
           {/* Eğer 4'ten az küçük görsel varsa boş kutu ekle */}
@@ -757,9 +757,9 @@ const HotelDetailsPage: React.FC = () => {
               <span style={{ fontSize: 40, fontWeight: 900, color: '#1e293b', padding: 0, background: 'none', borderRadius: 0, letterSpacing: 1, boxShadow: 'none', border: 'none' }}>
                 {offersData.offers[0].price?.currency} {offersData.offers[0].price?.amount.toLocaleString()}
               </span>
-              <button
+            <button
                 onClick={() => handleBookThisOffer(offersData.offers[0])}
-                style={{
+              style={{
                   background: '#181818',
                   color: '#fff',
                   border: 'none',
@@ -777,9 +777,9 @@ const HotelDetailsPage: React.FC = () => {
                 onMouseLeave={e => e.currentTarget.style.background = '#181818'}
               >
                 Book Now
-              </button>
+            </button>
               <span
-                style={{
+            style={{
                   color: '#181818',
                   fontSize: 17,
                   fontWeight: 600,
@@ -796,9 +796,9 @@ const HotelDetailsPage: React.FC = () => {
               >
                 See Offer Details
               </span>
-            </div>
+              </div>
           )}
-        </div>
+          </div>
         <div style={{ fontSize: 18, color: '#232323', fontWeight: 400, marginTop: 2, textAlign: 'left' }}>
           {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country?.name}` : ''}
         </div>
@@ -806,7 +806,7 @@ const HotelDetailsPage: React.FC = () => {
         {hotel?.homePage && (
           <div style={{ color: '#181818', fontWeight: 600, fontSize: 15, marginTop: 4, marginBottom: 2, textDecoration: 'underline' }}>
             <a href={hotel.homePage} target="_blank" rel="noopener noreferrer" style={{ color: '#181818' }}>{hotel.homePage}</a>
-          </div>
+                </div>
         )}
         {/* Silik çizgi */}
         <div style={{ width: '100%', height: 1, background: 'linear-gradient(to right, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '18px 0 0 0' }} />
@@ -829,8 +829,8 @@ const HotelDetailsPage: React.FC = () => {
           <div style={{ flex: 2, padding: '0 32px 0 0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 18px 0', color: '#181818', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
               {FaConciergeBell({ style: { color: '#181818', fontSize: 26 } })} Facilities
-            </h2>
-            {/* Facilities Grid - all categories */}
+        </h2>
+          {/* Facilities Grid - all categories */}
             {hotel?.seasons?.[0]?.facilityCategories?.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 {hotel.seasons[0].facilityCategories.map((cat: any) => (
@@ -839,7 +839,7 @@ const HotelDetailsPage: React.FC = () => {
                     {!(hotel.seasons[0].facilityCategories.length === 1 && cat.name && cat.name.toLowerCase() === 'general') && cat.name && (
                       <div style={{ fontWeight: 700, fontSize: 16, color: '#181818', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                         {cat.name}
-                      </div>
+                    </div>
                     )}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
                       {cat.facilities?.map((f: any) => (
@@ -857,24 +857,24 @@ const HotelDetailsPage: React.FC = () => {
             ) : (
               <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '12px 0' }}>No details found for this section.</div>
             )}
-            {/* Themes Badges */}
+          {/* Themes Badges */}
             <div style={{ marginTop: 18 }}>
               <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px 0', color: '#181818', display: 'flex', alignItems: 'center', gap: 8 }}>
                 {FaUmbrellaBeach({ style: { color: '#181818', fontSize: 18 } })} Themes
-              </h3>
-              {hotel?.themes?.length > 0 ? (
+            </h3>
+            {hotel?.themes?.length > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-                  {hotel.themes.map((theme: any) => (
+                {hotel.themes.map((theme: any) => (
                     <span key={theme.id} style={{ color: '#181818', fontWeight: 500, fontSize: 15, background: 'transparent', padding: 0, border: 'none', borderRadius: 0, boxShadow: 'none', minHeight: 'unset', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {FaUmbrellaBeach({ style: { fontSize: 14, color: '#181818' } })} {theme.name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
+                  </span>
+                ))}
+              </div>
+            ) : (
                 <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '8px 0' }}>No details found for this section.</div>
-              )}
-            </div>
+            )}
           </div>
+        </div>
           {/* Dikey silik çizgi */}
           <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
           {/* Map & Contact (sağ) */}
@@ -910,26 +910,26 @@ const HotelDetailsPage: React.FC = () => {
                 <div style={{ color: '#181818', fontWeight: 600, fontSize: 15, marginTop: 2, textDecoration: 'underline' }}>
                   <span style={{ marginRight: 6 }}>📞</span>
                   <a href={`tel:${hotel.phoneNumber}`} style={{ color: '#181818' }}>{hotel.phoneNumber}</a>
-                </div>
-              )}
+              </div>
+            )}
               {hotel?.faxNumber && (
                 <div style={{ color: '#181818', fontWeight: 600, fontSize: 15, marginTop: 8, textDecoration: 'underline' }}>
                   <span style={{ marginRight: 6 }}>📠</span>
                   <a href={`tel:${hotel.faxNumber}`} style={{ color: '#181818' }}>{hotel.faxNumber}</a>
-                </div>
-              )}
+              </div>
+            )}
               {hotel?.email && (
                 <div style={{ color: '#181818', fontWeight: 600, fontSize: 15, marginTop: 8, textDecoration: 'underline' }}>
                   <span style={{ marginRight: 6 }}>✉️</span>
                   <a href={`mailto:${hotel.email}`} style={{ color: '#181818' }}>{hotel.email}</a>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+              </div>
             <div style={{ color: '#232931', fontSize: 15, fontWeight: 400, marginTop: 6, textAlign: 'center', wordBreak: 'break-word' }}>
               {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country?.name}` : ''}
-            </div>
+              </div>
+                </div>
           </div>
-        </div>
         {/* ALTA: Description tam genişlikte */}
         <div style={{ width: '100%', marginTop: 36, padding: '0 8px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
           <CardDescriptions hotel={hotel} />
@@ -1371,7 +1371,7 @@ const HotelDetailsPage: React.FC = () => {
             <div style={{ flex: 1, minWidth: 220, marginBottom: 18 }}>
               <div style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: 8 }}>HotelRes</div>
               <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Your trusted partner for the best hotel experience.</div>
-            </div>
+              </div>
             <div style={{ flex: 1, minWidth: 180, marginBottom: 18 }}>
               <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white' }}>Quick Access</div>
               <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8, cursor: 'pointer' }} onClick={() => window.location.href = '/'}>Home</div>
@@ -1383,7 +1383,7 @@ const HotelDetailsPage: React.FC = () => {
               <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>info@hotelres.com</div>
               <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>+90 212 555 0123</div>
             </div>
-          </div>
+            </div>
           <div style={{ borderTop: '1px solid #2d3250', margin: '2.5rem 0 0 0', width: '100%' }}></div>
           <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.2rem 2rem 0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', color: '#b0b0b0', fontSize: '1rem' }}>
             <span>© {new Date().getFullYear()} HotelRes. All rights reserved.</span>

@@ -561,6 +561,8 @@ html, body {
   backdrop-filter: blur(10px) !important;
   animation: fadeInDown 0.3s ease-out !important;
   margin-top: 2px !important;
+  min-width: 220px !important;
+  width: 260px !important;
 }
 
 .custom-select-item {
@@ -571,6 +573,8 @@ html, body {
   transition: all 0.2s ease;
   border-bottom: 1px solid #f8f9fa;
   position: relative;
+  min-width: 220px !important;
+  width: 260px !important;
 }
 
 .custom-select-item:last-child {

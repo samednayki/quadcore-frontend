@@ -177,18 +177,12 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
         }
       }
       
-      const requestBody = {
+      let requestBody: any = {
         checkAllotment: true,
         checkStopSale: true,
         getOnlyDiscountedPrice: false,
         getOnlyBestOffers: true,
         productType: 2,
-        arrivalLocations: [
-          {
-            id: searchParams.destination,
-            type: 2 // Assuming city type
-          }
-        ],
         roomCriteria: roomCriteria,
         nationality: searchParams.nationality,
         checkIn: searchParams.checkIn,
@@ -196,6 +190,10 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
         currency: searchParams.currency,
         culture: "en-US"
       };
+      requestBody.arrivalLocations = [{
+        id: searchParams.destination,
+        type: 2
+      }];
 
       console.log('PriceSearch Request:', requestBody);
 
@@ -415,13 +413,64 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
     );
   }
 
-  if (error) {
+  // Otel bulunamazsa veya error varsa gösterilecek özel UI
+  if ((!loading && hotels.length === 0) || error) {
+    // Arama parametrelerini al
+    const { destinationName, checkIn, checkOut, guests, rooms } = searchParams || {};
+    // Tarihleri İngilizce formatla
+    const formatDate = (dateStr: string) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: '2-digit' });
+    };
+    // Guest/room metni
+    const guestText = guests === 1 ? '1 adult' : `${guests} adults`;
+    const roomText = rooms === 1 ? '1 room' : `${rooms} rooms`;
+    // Otel adı
+    const hotelText = destinationName || 'your selected hotel';
+    // Mesaj
+    const msg = `No hotels found for ${guestText} and ${roomText} at ${hotelText} between ${formatDate(checkIn)} and ${formatDate(checkOut)}.`;
     return (
-      <div className="hotel-list-error">
-        <div className="error-icon">⚠️</div>
-        <h2>Error</h2>
-        <p>{error}</p>
-        <button onClick={fetchHotels} className="retry-btn">Try Again</button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 24, boxShadow: '0 8px 32px #2563eb22', padding: '48px 36px', textAlign: 'center', maxWidth: 480 }}>
+          <div style={{ fontSize: 54, marginBottom: 16 }}>😕</div>
+          <h2 style={{ fontWeight: 800, color: '#2563eb', marginBottom: 8 }}>No Hotels Found</h2>
+          <div style={{ color: '#334155', fontSize: 18, marginBottom: 24 }}>{msg}</div>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                background: 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
+                color: '#fff',
+                fontWeight: 700,
+                border: 'none',
+                borderRadius: 12,
+                padding: '14px 36px',
+                fontSize: 18,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #2563eb22'
+              }}
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                background: 'linear-gradient(90deg, #7c3aed 0%, #2563eb 100%)',
+                color: '#fff',
+                fontWeight: 700,
+                border: 'none',
+                borderRadius: 12,
+                padding: '14px 36px',
+                fontSize: 18,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #7c3aed22'
+              }}
+            >
+              Back to Search
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -853,7 +902,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                   </div>
                   <div className="calendar-grid">
                     {generateCalendarDays().map(({ date, isCurrentMonth }, index) => (
-                      <button
+              <button 
                         key={index}
                         type="button"
                         className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isDateAvailable(date) ? 'available' : 'unavailable'} ${isSelectedDate(date) ? 'selected' : ''} ${isToday(date) ? 'today' : ''}`}
@@ -865,9 +914,9 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                         }}
                       >
                         {date.getDate()}
-                      </button>
+              </button>
                     ))}
-                  </div>
+            </div>
                   <div className="calendar-footer">
                     <button type="button" className="calendar-footer-btn" onClick={clearSelection}>Clear</button>
                     <button type="button" className="calendar-footer-btn" onClick={goToToday}>Today</button>
@@ -1153,8 +1202,8 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               ) : (
                 <>
                   {filteredAndSortedHotels.map((hotel) => {
-                    const bestOffer = getBestOffer(hotel);
-                    return (
+                  const bestOffer = getBestOffer(hotel);
+                  return (
                       <div
                         key={hotel.id}
                         className="hotel-card"
@@ -1179,63 +1228,63 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                           }
                         }}
                       >
-                        {/* Hotel Image */}
+                      {/* Hotel Image */}
                         <div className="hotel-image" style={{ marginRight: 32, minWidth: 220, maxWidth: 220 }}>
-                          <img 
-                            src={hotel.thumbnailFull || hotel.thumbnail || process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg'} 
-                            alt={hotel.name}
+                        <img 
+                          src={hotel.thumbnailFull || hotel.thumbnail || process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg'} 
+                          alt={hotel.name}
                             style={{ width: 220, height: 180, objectFit: 'cover', borderRadius: 16 }}
-                            onError={(e) => {
-                              e.currentTarget.src = process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg';
-                            }}
-                          />
+                          onError={(e) => {
+                            e.currentTarget.src = process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg';
+                          }}
+                        />
                           <div className="hotel-actions" style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
                             <button className="action-btn favorite-btn">❤️</button>
                             <button className="action-btn share-btn">📤</button>
-                          </div>
                         </div>
+                      </div>
                         {/* Hotel Info & Details (LEFT) */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                           {/* Başlık ve yıldızlar */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                             <h3 className="hotel-name" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', margin: 0, marginRight: 10, display: 'flex', alignItems: 'center' }}>{hotel.name}</h3>
                             <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18 }}>
-                              {Array.from({ length: 5 }, (_, i) => {
-                                const fullStars = Math.floor(hotel.stars);
-                                const hasHalfStar = hotel.stars % 1 >= 0.5;
-                                const starSvg = (fill: string) => (
-                                  <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
-                                  </svg>
-                                );
-                                if (i < fullStars) {
+                            {Array.from({ length: 5 }, (_, i) => {
+                              const fullStars = Math.floor(hotel.stars);
+                              const hasHalfStar = hotel.stars % 1 >= 0.5;
+                              const starSvg = (fill: string) => (
+                                <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
+                                </svg>
+                              );
+                              if (i < fullStars) {
                                   return <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>{starSvg('#fbbf24')}</span>;
-                                } else if (i === fullStars && hasHalfStar) {
-                                  return (
-                                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                      <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                        <defs>
-                                          <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="50%" stopColor="#fbbf24"/>
-                                            <stop offset="50%" stopColor="#d1d5db"/>
-                                          </linearGradient>
-                                        </defs>
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
-                                      </svg>
-                                    </span>
-                                  );
-                                } else {
+                              } else if (i === fullStars && hasHalfStar) {
+                                return (
+                                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                      <defs>
+                                        <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                                          <stop offset="50%" stopColor="#fbbf24"/>
+                                          <stop offset="50%" stopColor="#d1d5db"/>
+                                        </linearGradient>
+                                      </defs>
+                                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                                    </svg>
+                                  </span>
+                                );
+                              } else {
                                   return <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>{starSvg('#d1d5db')}</span>;
                                 }
                               })}
-                            </span>
-                          </div>
+                                    </span>
+                                  </div>
                           {/* Adres */}
                           <div className="hotel-location" style={{ fontSize: '1.05rem', color: '#6b7280', fontWeight: 500, marginBottom: 6 }}>
                             📍 {hotel.address}
                             {hotel.city?.name ? `, ${hotel.city.name}` : ''}
                             {hotel.country?.name ? `, ${hotel.country.name}` : ''}
-                          </div>
+                                    </div>
                           {/* Açıklama */}
                           {hotel.description?.text && (
                             <p className="hotel-description" style={{ fontSize: '0.95rem', color: '#4b5563', margin: 0, marginBottom: 10, lineHeight: 1.5, maxWidth: 700 }}>
@@ -1252,16 +1301,16 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                               ))}
                               {hotel.facilities.length > 4 && (
                                 <span className="facility-more">+{hotel.facilities.length - 4} more</span>
+                                  )}
+                                </div>
                               )}
-                            </div>
-                          )}
                           {/* Rating'i See Details'ın altına taşıyoruz, See Details butonunu kaldırıyoruz */}
                             {bestOffer && (
                             <div style={{ fontWeight: 500, color: '#64748b', fontSize: '1.08rem', textAlign: 'left', marginTop: 18 }}>
                               Rating: {hotel.rating}
-                              </div>
-                            )}
                             </div>
+                            )}
+                          </div>
                         {/* Fiyat (RIGHT) */}
                         <div style={{
                           minWidth: 220,
@@ -1293,11 +1342,11 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                               marginBottom: 0,
                             }}>
                               {bestOffer.price.currency} {bestOffer.price.amount.toLocaleString()}
-                          </div>
-                          )}
                         </div>
+                          )}
                       </div>
-                    );
+                    </div>
+                  );
                   })}
                 </>
               )}
