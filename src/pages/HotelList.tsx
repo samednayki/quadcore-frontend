@@ -1155,158 +1155,119 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                   {filteredAndSortedHotels.map((hotel) => {
                     const bestOffer = getBestOffer(hotel);
                     return (
-                      <div key={hotel.id} className="hotel-card" 
-                        style={{
-                          cursor: 'pointer',
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'stretch',
-                          background: '#fff',
-                          border: '1.5px solid #e5e7eb',
-                          boxShadow: '0 2px 12px rgba(80,80,160,0.07)',
-                          borderRadius: 22,
-                          marginBottom: 32,
-                          padding: '40px 40px 40px 40px',
-                          minHeight: 220
-                        }}
-                        onClick={() => {
-                          if (bestOffer) {
-                            const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
-                            navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
-                          }
-                        }}
-                      >
+                      <div key={hotel.id} className="hotel-card" style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        background: '#fff',
+                        border: '1.5px solid #e5e7eb',
+                        boxShadow: '0 2px 12px rgba(80,80,160,0.07)',
+                        borderRadius: 22,
+                        marginBottom: 32,
+                        padding: '40px 40px 40px 40px',
+                        minHeight: 220
+                      }}>
                         {/* Hotel Image */}
-                        <div className="hotel-image">
+                        <div className="hotel-image" style={{ marginRight: 32, minWidth: 220, maxWidth: 220 }}>
                           <img 
                             src={hotel.thumbnailFull || hotel.thumbnail || process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg'} 
                             alt={hotel.name}
+                            style={{ width: 220, height: 180, objectFit: 'cover', borderRadius: 16 }}
                             onError={(e) => {
                               e.currentTarget.src = process.env.PUBLIC_URL + '/fernando-alvarez-rodriguez-M7GddPqJowg-unsplash.jpg';
                             }}
                           />
-                          <div className="hotel-actions">
-                            <button className="action-btn favorite-btn">
-                              ❤️
-                            </button>
-                            <button className="action-btn share-btn">
-                              📤
-                            </button>
+                          <div className="hotel-actions" style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
+                            <button className="action-btn favorite-btn">❤️</button>
+                            <button className="action-btn share-btn">📤</button>
                           </div>
                         </div>
-                        {/* Sağdaki içerik ve fiyatı iki sütuna ayır */}
-                        <div style={{ display: 'flex', flex: 1, flexDirection: 'row', alignItems: 'stretch' }}>
-                          {/* Sol ana içerik */}
-                          <div style={{ flex: 3, padding: '32px 32px 32px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                            {/* Hotel Info */}
-                            <div className="hotel-header" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <h3 className="hotel-name" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0, marginTop: 0, fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>
-                                {hotel.name}
-                                <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18 }}>
-                                  {Array.from({ length: 5 }, (_, i) => {
-                                    const fullStars = Math.floor(hotel.stars);
-                                    const hasHalfStar = hotel.stars % 1 >= 0.5;
-                                    // SVG yıldız path'i
-                                    const starSvg = (fill: string) => (
+                        {/* Hotel Info & Details */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                          {/* Başlık ve yıldızlar */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                            <h3 className="hotel-name" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', margin: 0, marginRight: 10, display: 'flex', alignItems: 'center' }}>{hotel.name}</h3>
+                            <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18 }}>
+                              {Array.from({ length: 5 }, (_, i) => {
+                                const fullStars = Math.floor(hotel.stars);
+                                const hasHalfStar = hotel.stars % 1 >= 0.5;
+                                const starSvg = (fill: string) => (
+                                  <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
+                                  </svg>
+                                );
+                                if (i < fullStars) {
+                                  return <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>{starSvg('#fbbf24')}</span>;
+                                } else if (i === fullStars && hasHalfStar) {
+                                  return (
+                                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={fill} />
+                                        <defs>
+                                          <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="50%" stopColor="#fbbf24"/>
+                                            <stop offset="50%" stopColor="#d1d5db"/>
+                                          </linearGradient>
+                                        </defs>
+                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
                                       </svg>
-                                    );
-                                    if (i < fullStars) {
-                                      // Dolu yıldız
-                                      return (
-                                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                          {starSvg('#fbbf24')}
-                                        </span>
-                                      );
-                                    } else if (i === fullStars && hasHalfStar) {
-                                      // Yarım yıldız
-                                      return (
-                                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                          <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                                            <defs>
-                                              <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="50%" stopColor="#fbbf24"/>
-                                                <stop offset="50%" stopColor="#d1d5db"/>
-                                              </linearGradient>
-                                            </defs>
-                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
-                                          </svg>
-                                        </span>
-                                      );
-                                    }
-                                  })}
-                                </span>
-                              </h3>
-                              {/* Adres burada gösterilmeyecek */}
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: 0 }}>
-                                {/* Sadece rating ve review sayısı kalsın */}
-                                <span style={{ fontSize: '1rem', color: '#fbbf24' }}>{hotel.rating.toFixed(1)}</span>
-                                <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>({hotel.rating})</span>
-                              </div>
-                            </div>
-                            {/* Facilities */}
-                            <div className="hotel-facilities" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
-                              {hotel.facilities?.map(facility => (
-                                <span key={facility.id} className="hotel-facility-tag" style={{ background: '#f3f4f6', color: '#374151', padding: '4px 10px', borderRadius: 10, fontSize: '0.85rem' }}>
+                                    </span>
+                                  );
+                                } else {
+                                  return <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>{starSvg('#d1d5db')}</span>;
+                                }
+                              })}
+                            </span>
+                          </div>
+                          {/* Adres */}
+                          <div className="hotel-location" style={{ fontSize: '1.05rem', color: '#6b7280', fontWeight: 500, marginBottom: 6 }}>
+                            📍 {hotel.address}
+                            {hotel.city?.name ? `, ${hotel.city.name}` : ''}
+                            {hotel.country?.name ? `, ${hotel.country.name}` : ''}
+                          </div>
+                          {/* Açıklama */}
+                          {hotel.description?.text && (
+                            <p className="hotel-description" style={{ fontSize: '0.95rem', color: '#4b5563', margin: 0, marginBottom: 10, lineHeight: 1.5, maxWidth: 700 }}>
+                              {hotel.description.text.substring(0, 150)}...
+                            </p>
+                          )}
+                          {/* Facilities */}
+                          {hotel.facilities && hotel.facilities.length > 0 && (
+                            <div className="hotel-facilities" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+                              {hotel.facilities.slice(0, 4).map((facility, index) => (
+                                <span key={index} className="facility-tag" style={{ background: '#f3f4f6', color: '#374151', padding: '4px 10px', borderRadius: 10, fontSize: '0.85rem' }}>
                                   {getFacilityIcon(facility.name)} {facility.name}
                                 </span>
                               ))}
+                              {hotel.facilities.length > 4 && (
+                                <span className="facility-more">+{hotel.facilities.length - 4} more</span>
+                              )}
                             </div>
-                            {/* Description */}
-                            <p style={{ fontSize: '0.95rem', color: '#4b5563', marginTop: 16, lineHeight: 1.5 }}>{hotel.description?.text}</p>
-                            {/* Adres */}
-                            <p style={{ fontSize: '1.05rem', color: '#6b7280', marginTop: 18, marginBottom: 0, fontWeight: 500, whiteSpace: 'pre-line', textAlign: 'left' }}>
-                              {hotel.address}
-                              {hotel.city?.name ? `\n${hotel.city.name}` : ''}
-                              {hotel.country?.name ? `\n${hotel.country.name}` : ''}
-                            </p>
-                          </div>
-                          {/* Right side: Price and Booking */}
-                          <div style={{
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            textAlign: 'center',
-                            minWidth: 240,
-                            maxWidth: 300,
-                            margin: '0 auto',
-                            padding: '32px 0',
-                            borderLeft: '1px solid #e5e7eb',
-                          }}>
+                          )}
+                          {/* Fiyat ve yıldızlar yanyana */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 24, margin: '10px 0 0 0' }}>
                             {bestOffer && (
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 2 }}>
-                                  {bestOffer.price.currency}
-                                </div>
-                                <p style={{ fontSize: '2.1rem', fontWeight: 900, color: '#1e293b', margin: 0, marginTop: 0, marginBottom: 18, letterSpacing: 1 }}>
-                                  {bestOffer.price.amount.toLocaleString()}
-                                  {bestOffer.price.percent > 0 && ` (${bestOffer.price.percent}% off)`}
-                                </p>
-                                <p style={{ fontSize: '0.98rem', color: '#6b7280', margin: '0 0 10px 0' }}>
-                                  {bestOffer.night} {bestOffer.night === 1 ? 'night' : 'nights'}
-                                </p>
-                                <p style={{ fontSize: '0.9rem', color: '#6b7280', textDecoration: 'line-through' }}>
-                                  {bestOffer.price.currency} {bestOffer.price.oldAmount.toLocaleString()}
-                                </p>
-                                <button 
-                                  className="book-btn" 
-                                  style={{ marginTop: 18 }}
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent card click
-                                    if (bestOffer) {
-                                      const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
-                                      navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
-                                    }
-                                  }}
-                                >
-                                  Book Now
-                                </button>
+                              <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#1e293b', letterSpacing: 1 }}>
+                                {bestOffer.price.currency} {bestOffer.price.amount.toLocaleString()}
                               </div>
                             )}
+                            <div style={{ fontWeight: 500, color: '#64748b', fontSize: '1.08rem' }}>
+                              Rating: {hotel.rating}
+                            </div>
                           </div>
+                          {/* See Details butonu */}
+                          <button
+                            className="see-details-btn"
+                            onClick={() => {
+                              if (bestOffer) {
+                                const ownerProviderParam = hotel.ownerProvider ? `&ownerProvider=${encodeURIComponent(String(hotel.ownerProvider))}` : '';
+                                navigate(`/hotel-details/${hotel.id}?searchId=${encodeURIComponent(searchId)}&offerId=${encodeURIComponent(bestOffer.offerId)}&currency=${encodeURIComponent(bestOffer.price.currency)}&productType=2&productId=${encodeURIComponent(hotel.id)}${ownerProviderParam}`);
+                              }
+                            }}
+                            style={{ marginTop: 18, background: '#2563eb', color: 'white', fontWeight: 700, borderRadius: 8, padding: '10px 32px', fontSize: 18, border: 'none', cursor: bestOffer ? 'pointer' : 'not-allowed', opacity: bestOffer ? 1 : 0.5 }}
+                            disabled={!bestOffer}
+                          >
+                            See Details
+                          </button>
                         </div>
                       </div>
                     );
