@@ -566,7 +566,7 @@ const HotelDetailsPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
       {/* HEADER (same as HotelList/SearchPage) */}
       <header style={{
         width: '100%',
@@ -624,338 +624,277 @@ const HotelDetailsPage: React.FC = () => {
           </nav>
         </div>
       </header>
-      {/* HERO SECTION (modern horizontal card) */}
+      {/* Galeri grid - Düsseldorf tarzı */}
       <div style={{
-        width: '100%',
-        maxWidth: 1200,
-        margin: '32px auto 32px auto',
-        borderRadius: 22,
-        boxShadow: '0 4px 24px #1e3a8a11',
+        width: '100vw',
         background: '#fff',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'stretch',
+        gap: 12,
         padding: 0,
         position: 'relative',
         overflow: 'hidden',
+        margin: 0,
+        minHeight: 420,
+        height: 420,
+        borderBottomLeftRadius: 22,
+        borderBottomRightRadius: 22,
+        boxShadow: '0 4px 24px #1e3a8a11',
+        marginTop: 32, // üstten boşluk eklendi
       }}>
-        {/* Galeri grid */}
-        <div style={{ display: 'flex', width: '100%', height: 340, gap: 0 }}>
-          {/* Sol büyük görsel */}
-          <div style={{ flex: '0 0 48%', height: 340, position: 'relative' }}>
-            {images.length > 0 ? (
-              <img
-                src={images[0]}
-                alt={hotel?.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', borderTopLeftRadius: 22, borderBottomLeftRadius: 22 }}
-              />
-            ) : (
-              <div style={{ width: '100%', height: '100%', background: '#e0e7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 18, borderTopLeftRadius: 22, borderBottomLeftRadius: 22 }}>No Image</div>
-            )}
-          </div>
-          {/* Sağ küçük grid */}
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, height: 340 }}>
-            {images.slice(1, 5).map((img: any, idx: number) => (
-              <div key={img} style={{ position: 'relative', width: '100%', height: '100%' }}>
-                <img src={img} alt={hotel?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                {/* Son görselde +N etiketi */}
-                {idx === 3 && images.length > 5 && (
-                  <div style={{ position: 'absolute', right: 10, bottom: 10, background: 'rgba(0,0,0,0.65)', color: '#fff', fontWeight: 700, fontSize: 18, borderRadius: 12, padding: '4px 16px' }}>
-                    +{images.length - 4}
+        {/* Sol büyük görsel */}
+        <div style={{ flex: '0 0 50%', height: '100%', position: 'relative' }}>
+          {images.length > 0 ? (
+            <img
+              src={images[0]}
+              alt={hotel?.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: '#e0e7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 18 }}>No Image</div>
+          )}
+        </div>
+        {/* Sağda 4 küçük fotoğraf (2x2 grid) */}
+        <div style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
+          gap: 12,
+          height: '100%',
+        }}>
+          {images.slice(1, 5).map((img: any, idx: number) => {
+            const isLast = idx === 3;
+            const showSeeMore = isLast && images.length > 5;
+            return (
+              <div key={img} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', cursor: showSeeMore ? 'pointer' : 'default' }}
+                onClick={showSeeMore ? () => openLightbox(4) : undefined}
+                tabIndex={showSeeMore ? 0 : undefined}
+                aria-label={showSeeMore ? `See all photos` : undefined}
+              >
+                <img src={img} alt={hotel?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {showSeeMore && (
+                  <div style={{
+                    position: 'absolute',
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    top: 0,
+                    background: 'rgba(0,0,0,0.38)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'background 0.18s',
+                  }}>
+                    See +{images.length - 4} photos
                   </div>
                 )}
               </div>
-            ))}
-            {/* Eğer 4'ten az küçük görsel varsa boş kutu ekle */}
-            {Array.from({ length: Math.max(0, 4 - (images.length - 1)) }).map((_, i) => (
-              <div key={i} style={{ background: '#e0e7ef', width: '100%', height: '100%' }} />
-            ))}
-          </div>
-        </div>
-        {/* Başlık ve adres alanı */}
-        <div style={{ padding: '32px 40px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <h1 style={{ fontSize: 38, fontWeight: 900, margin: 0, color: '#181818', letterSpacing: -1 }}>{hotel?.name || 'Hotel Name'}</h1>
-            {hotel?.stars && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 28, marginLeft: 8 }}>
-                {Array.from({ length: 5 }, (_, i) => {
-                  const fullStars = Math.floor(hotel.stars);
-                  const hasHalfStar = hotel.stars % 1 >= 0.5;
-                  if (i < fullStars) return <span key={i}>{starSvg('#fbbf24')}</span>;
-                  if (i === fullStars && hasHalfStar) {
-                    return (
-                      <span key={i}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
-                          <defs>
-                            <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="50%" stopColor="#fbbf24"/>
-                              <stop offset="50%" stopColor="#d1d5db"/>
-                            </linearGradient>
-                          </defs>
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
-                        </svg>
-                      </span>
-                    );
-                  }
-                  return <span key={i}>{starSvg('#d1d5db')}</span>;
-                })}
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: 18, color: '#232931', fontWeight: 400, marginTop: 6 }}>
-            {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country.name}` : ''}
-          </div>
+            );
+          })}
+          {/* Eğer 4'ten az küçük görsel varsa boş kutu ekle */}
+          {Array.from({ length: Math.max(0, 4 - (images.length - 1)) }).map((_, i) => (
+            <div key={i} style={{ background: '#e0e7ef', width: '100%', height: '100%' }} />
+          ))}
         </div>
       </div>
-      {/* Gallery Grid - horizontal scrollable */}
-      {images.length > 1 ? (
-        <div style={{ position: 'relative', maxWidth: 1200, margin: '0 auto' }}>
-          {/* Left Arrow */}
-          {canScrollLeft && (
-            <button
-              onClick={() => scrollGallery('left')}
-              style={{
-                position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 2,
-                background: 'rgba(30,41,59,0.85)', color: '#fff', border: 'none', borderRadius: '50%', width: 38, height: 38,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, boxShadow: '0 2px 8px #0003', cursor: 'pointer', transition: 'background 0.18s',
-                opacity: 0.85
-              }}
-              aria-label="Galeriyi sola kaydır"
-            >
-              &#8592;
-            </button>
+      {/* Otel ismi, yıldız ve adres - galeri gridinin hemen altında, ortalanmış ve az boşluklu */}
+      <div style={{
+        maxWidth: 1200,
+        margin: '0 auto',
+        padding: '64px 0 0 0', // padding-top'u artırdım (32px -> 64px)
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start', // sola hizalı
+        gap: 8,
+        paddingLeft: 40, // biraz daha sola kaydır
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <h1 style={{ fontSize: 38, fontWeight: 900, margin: 0, color: '#181818', letterSpacing: -1, textAlign: 'left' }}>{hotel?.name || 'Hotel Name'}</h1>
+          {hotel?.stars && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 28, marginLeft: 0 }}>
+              {Array.from({ length: 5 }, (_, i) => {
+                const fullStars = Math.floor(hotel.stars);
+                const hasHalfStar = hotel.stars % 1 >= 0.5;
+                if (i < fullStars) return <span key={i}>{starSvg('#fbbf24')}</span>;
+                if (i === fullStars && hasHalfStar) {
+                  return (
+                    <span key={i}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                        <defs>
+                          <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="50%" stopColor="#fbbf24"/>
+                            <stop offset="50%" stopColor="#d1d5db"/>
+                          </linearGradient>
+                        </defs>
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                      </svg>
+                    </span>
+                  );
+                }
+                return <span key={i}>{starSvg('#d1d5db')}</span>;
+              })}
+            </span>
           )}
-          {/* Right Arrow */}
-          {canScrollRight && (
-            <button
-              onClick={() => scrollGallery('right')}
-              style={{
-                position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 2,
-                background: 'rgba(30,41,59,0.85)', color: '#fff', border: 'none', borderRadius: '50%', width: 38, height: 38,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, boxShadow: '0 2px 8px #0003', cursor: 'pointer', transition: 'background 0.18s',
-                opacity: 0.85
-              }}
-              aria-label="Galeriyi sağa kaydır"
-            >
-              &#8594;
-            </button>
-          )}
-          <div
-            ref={galleryRef}
-            style={{
-              display: 'flex',
-              overflowX: 'auto',
-              gap: 16,
-              padding: '0 48px 32px 48px',
-              maxWidth: 1200,
-              margin: '0 auto',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              cursor: 'grab',
-              userSelect: 'none',
-            }}
-            className="hotel-horizontal-gallery"
-          >
-            {images.map((img: string, idx: number) => (
-              <div
-                key={img}
-                style={{
-                  borderRadius: 14,
-                  overflow: 'hidden',
-                  boxShadow: '0 2px 12px #0001',
-                  cursor: 'pointer',
-                  transition: 'transform 0.18s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.18s',
-                  minWidth: 160,
-                  width: 160,
-                  height: 120,
-                  flex: '0 0 160px',
-                  background: '#f1f5f9',
-                  position: 'relative',
-                }}
-                onClick={() => openLightbox(idx)}
-                tabIndex={0}
-                aria-label={`Büyüt: ${hotel?.name}`}
-                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && openLightbox(idx)}
-              >
-                <img src={img} alt={hotel?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.18s', }}
-                  onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.06)')}
-                  onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
-                />
-              </div>
-            ))}
-            <style>{`
-              .hotel-horizontal-gallery::-webkit-scrollbar { display: none; }
-              .hotel-horizontal-gallery.dragging { cursor: grabbing !important; }
-            `}</style>
-          </div>
         </div>
-      ) : null}
-      {/* Description Card (by seasons[0].textCategories) or fallback */}
-      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 2px 12px #0001', padding: '36px 40px', marginBottom: 0, animation: 'fadeInUp 0.5s', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 18px 0', color: '#2563eb' }}>Descriptions</h2>
-        {hotel?.seasons?.[0]?.textCategories?.length > 0 ? (
-          hotel.seasons[0].textCategories.map((cat: any, idx: number) => (
-            <div key={cat.name || idx} style={{ marginBottom: 8, padding: '18px 0', borderBottom: idx !== hotel.seasons[0].textCategories.length - 1 ? '1px solid #e0e7ef' : 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontWeight: 700, fontSize: 20, color: '#2563eb', marginBottom: 4 }}>{cat.name}</div>
-              {cat.presentations?.map((pres: any, pIdx: number) => (
-                <div key={pIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
-                  <div style={{ minWidth: 28, fontSize: 20, marginTop: 2 }}>{renderExplanation({ text: '', textType: pres.textType })}</div>
-                  <div style={{ fontSize: 17, color: '#334155', lineHeight: 1.7 }}>{pres.text}</div>
+        <div style={{ fontSize: 18, color: '#232931', fontWeight: 400, marginTop: 2, textAlign: 'left' }}>
+          {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country.name}` : ''}
+        </div>
+      </div>
+      {/* Description, Facilities & Map - YENİ GRID DÜZEN */}
+      <section style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 0,
+        maxWidth: 1200,
+        margin: '48px auto 0 auto',
+        padding: 0,
+        alignItems: 'stretch',
+        background: 'none',
+        boxShadow: 'none',
+        borderRadius: 0,
+      }}>
+        {/* Facilities & Themes (sol) */}
+        <div style={{ flex: 2, padding: '0 32px 0 0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 18px 0', color: '#16a34a', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
+            {FaConciergeBell({ style: { color: '#16a34a', fontSize: 26 } })} Facilities & Themes
+          </h2>
+          {/* Facilities Grid - all categories */}
+          {hotel?.seasons?.[0]?.facilityCategories?.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {hotel.seasons[0].facilityCategories.map((cat: any) => (
+                <div key={cat.id || cat.name} style={{ marginBottom: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0ea5e9', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {FaRegDotCircle({ style: { color: '#0ea5e9', fontSize: 16 } })} {cat.name}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {cat.facilities?.map((f: any) => (
+                      <span key={f.id || f.name} style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        background: '#e0f2fe', color: '#0369a1', borderRadius: 10, padding: '6px 12px', fontWeight: 600, fontSize: 14,
+                        boxShadow: '0 2px 8px #38bdf81a', border: '1.2px solid #bae6fd', minHeight: 32,
+                      }}>
+                        <span style={{ fontSize: 16, color: '#0ea5e9', minWidth: 18 }}>{facilityIcon(f.name, { fontSize: 16, color: '#0ea5e9' })}</span>
+                        <span>{f.name}</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
-          ))
-        ) : hotel?.description ? (
-          <div style={{ fontSize: 18, color: '#334155', lineHeight: 1.7 }}>
-            {renderExplanation(hotel.description)}
-          </div>
-        ) : (
-          <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No details found for this section.</div>
-        )}
-      </section>
-      {/* Facilities & Themes Section */}
-      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 4px 24px #1e3a8a11', padding: '44px 48px', animation: 'fadeInUp 0.5s', marginTop: 12 }}>
-        <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 28px 0', color: '#16a34a', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
-          {FaConciergeBell({ style: { color: '#16a34a', fontSize: 32 } })} Facilities & Themes
-        </h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start' }}>
-          {/* Facilities Grid - all categories */}
-          <div style={{ flex: 2, minWidth: 260 }}>
-            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 18px 0', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {FaHotel({ style: { color: '#2563eb', fontSize: 22 } })} Facilities
-            </h3>
-            {hotel?.seasons?.[0]?.facilityCategories?.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-                {hotel.seasons[0].facilityCategories.map((cat: any) => (
-                  <div key={cat.id || cat.name} style={{ marginBottom: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 18, color: '#0ea5e9', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {FaRegDotCircle({ style: { color: '#0ea5e9', fontSize: 18 } })} {cat.name}
-                      <div style={{ flex: 1, height: 2, background: 'linear-gradient(90deg,#0ea5e9 40%,#e0e7ef 100%)', marginLeft: 10, borderRadius: 2 }} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
-                      {cat.facilities?.map((f: any) => (
-                        <span key={f.id || f.name} style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          background: '#e0f2fe', color: '#0369a1', borderRadius: 12, padding: '10px 18px', fontWeight: 600, fontSize: 16,
-                          boxShadow: '0 2px 8px #38bdf81a',
-                          transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
-                          cursor: 'pointer',
-                          border: '1.5px solid #bae6fd',
-                          minHeight: 44,
-                          userSelect: 'none',
-                        }}
-                          tabIndex={0}
-                          onMouseOver={e => (e.currentTarget.style.background = '#bae6fd')}
-                          onMouseOut={e => (e.currentTarget.style.background = '#e0f2fe')}
-                        >
-                          <span style={{ fontSize: 20, color: '#0ea5e9', minWidth: 22 }}>{facilityIcon(f.name, { fontSize: 20, color: '#0ea5e9' })}</span>
-                          <span>{f.name}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No details found for this section.</div>
-            )}
-          </div>
+          ) : (
+            <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '12px 0' }}>No details found for this section.</div>
+          )}
           {/* Themes Badges */}
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 18px 0', color: '#f59e42', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {FaUmbrellaBeach({ style: { color: '#f59e42', fontSize: 22 } })} Themes
+          <div style={{ marginTop: 18 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px 0', color: '#f59e42', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {FaUmbrellaBeach({ style: { color: '#f59e42', fontSize: 18 } })} Themes
             </h3>
             {hotel?.themes?.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {hotel.themes.map((theme: any) => (
-                  <span key={theme.id} style={{ background: '#f59e42', color: '#fff', borderRadius: 10, padding: '10px 20px', fontWeight: 700, fontSize: 17, boxShadow: '0 2px 8px #f59e421a', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {FaUmbrellaBeach({ style: { fontSize: 18, color: '#fff' } })} {theme.name}
+                  <span key={theme.id} style={{ background: '#f59e42', color: '#fff', borderRadius: 8, padding: '6px 14px', fontWeight: 700, fontSize: 14, boxShadow: '0 2px 8px #f59e421a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {FaUmbrellaBeach({ style: { fontSize: 14, color: '#fff' } })} {theme.name}
                   </span>
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No details found for this section.</div>
+              <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '8px 0' }}>No details found for this section.</div>
             )}
           </div>
         </div>
-      </section>
-      {/* Contact & Map Section */}
-      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 2px 12px #0001', padding: '36px 40px', animation: 'fadeInUp 0.5s', marginTop: 24, marginBottom: 32 }}>
-        <h2 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 18px 0', color: '#f43f5e' }}>Contact & Location</h2>
-        {(hotel?.address || hotel?.phoneNumber || hotel?.faxNumber || hotel?.email || hotel?.homePage || hotel?.website || hotel?.geolocation || hotel?.address?.geolocation || hotel?.location) ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
-            {/* Address */}
-            {hotel.address?.addressLines?.length > 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Adres">📍</span>
-                {hotel.address.addressLines.join(', ')}
+        {/* Dikey silik çizgi */}
+        <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
+        {/* Description (orta) */}
+        <div style={{ flex: 3, padding: '0 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 12px 0', color: '#2563eb' }}>Descriptions</h2>
+          {hotel?.seasons?.[0]?.textCategories?.length > 0 ? (
+            hotel.seasons[0].textCategories.map((cat: any, idx: number) => (
+              <div key={cat.name || idx} style={{ marginBottom: 6, padding: '10px 0', borderBottom: idx !== hotel.seasons[0].textCategories.length - 1 ? '1px solid #e0e7ef' : 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontWeight: 700, fontSize: 16, color: '#2563eb', marginBottom: 2 }}>{cat.name}</div>
+                {cat.presentations?.map((pres: any, pIdx: number) => (
+                  <div key={pIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 2 }}>
+                    <div style={{ minWidth: 22, fontSize: 16, marginTop: 1 }}>{renderExplanation({ text: '', textType: pres.textType })}</div>
+                    <div style={{ fontSize: 15, color: '#334155', lineHeight: 1.6 }}>{pres.text}</div>
+                  </div>
+                ))}
               </div>
-            ) : null}
-            {hotel.address?.street && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Sokak">🛣️</span>
-                {hotel.address.street}
-              </div>
-            )}
-            {hotel.address?.streetNumber && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="No">#</span>
-                {hotel.address.streetNumber}
-              </div>
-            )}
-            {/* City (only show once) */}
-            {hotel.address?.city?.name ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Şehir">🏙️</span>
-                {hotel.address.city.name}
-              </div>
-            ) : hotel.city?.name ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Şehir">🏙️</span>
-                {hotel.city.name}
-              </div>
-            ) : null}
-            {/* Country (only show once) */}
-            {hotel.country?.name && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Ülke">🌍</span>
-                {hotel.country.name}
-              </div>
-            )}
-            {/* Contact */}
-            {hotel.phoneNumber && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Telefon">📞</span>
-                <a href={`tel:${hotel.phoneNumber}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>{hotel.phoneNumber}</a>
-              </div>
-            )}
-            {hotel.faxNumber && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="Faks">📠</span>
-                {hotel.faxNumber}
-              </div>
-            )}
-            {hotel.email && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                <span role="img" aria-label="E-posta">✉️</span>
-                <a href={`mailto:${hotel.email}`} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>{hotel.email}</a>
-              </div>
-            )}
-            {/* Website (only show once, always clickable) */}
-            {(hotel.website || hotel.homePage) && (() => {
-              let url = hotel.website || hotel.homePage;
-              if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, color: '#334155' }}>
-                  <span role="img" aria-label="Web">🌐</span>
-                  <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>{url}</a>
-                </div>
-              );
-            })()}
+            ))
+          ) : hotel?.description ? (
+            <div style={{ fontSize: 15, color: '#334155', lineHeight: 1.6 }}>
+              {renderExplanation(hotel.description)}
+            </div>
+          ) : (
+            <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '10px 0' }}>No details found for this section.</div>
+          )}
+        </div>
+        {/* Dikey silik çizgi */}
+        <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
+        {/* Map & Contact (sağ) */}
+        <div style={{ flex: 2, padding: '0 0 0 32px', display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', justifyContent: 'flex-start' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 12px 0', color: '#f43f5e' }}>Location</h2>
+          {/* Harita */}
+          {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude ? (
+            <iframe
+              title="Hotel Location"
+              width="100%"
+              height="180"
+              frameBorder="0"
+              style={{ borderRadius: 12, border: '1.5px solid #e0e7ef', marginBottom: 10 }}
+              src={`https://maps.google.com/maps?q=${hotel.geolocation.latitude},${hotel.geolocation.longitude}&z=15&output=embed`}
+              allowFullScreen
+            ></iframe>
+          ) : (
+            <div style={{ width: '100%', height: 180, background: '#e0e7ef', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 16 }}>No Map</div>
+          )}
+          {/* Haritada Göster Butonu */}
+          {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${hotel.geolocation.latitude},${hotel.geolocation.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: 'linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 16,
+                padding: '10px 28px',
+                border: 'none',
+                borderRadius: 10,
+                cursor: 'pointer',
+                boxShadow: '0 2px 12px #2563eb33',
+                letterSpacing: 0.5,
+                textDecoration: 'none',
+                marginBottom: 8,
+                marginTop: 0,
+                display: 'inline-block',
+                textAlign: 'center',
+                transition: 'background 0.18s',
+              }}
+            >
+              Haritada Göster
+            </a>
+          )}
+          {/* Adres ve iletişim */}
+          <div style={{ color: '#232931', fontSize: 15, fontWeight: 400, marginTop: 6, textAlign: 'center', wordBreak: 'break-word' }}>
+            {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country.name}` : ''}
           </div>
-        ) : (
-          <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No details found for this section.</div>
-        )}
+          {hotel.phoneNumber && (
+            <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
+              <a href={`tel:${hotel.phoneNumber}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.phoneNumber}</a>
+            </div>
+          )}
+          {hotel.email && (
+            <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
+              <a href={`mailto:${hotel.email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.email}</a>
+            </div>
+          )}
+        </div>
       </section>
       {/* Offers Section */}
       <section style={{ maxWidth: 900, margin: '48px auto 0 auto', padding: '40px 0', borderRadius: 22, background: '#fff', boxShadow: '0 2px 12px #0001', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
