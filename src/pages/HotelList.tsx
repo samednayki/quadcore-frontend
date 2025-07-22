@@ -701,7 +701,6 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             boxShadow: 'none',
             position: 'relative',
             zIndex: 20,
-            overflow: 'hidden',
           }}>
             {/* Destination */}
             <div style={{
@@ -1201,9 +1200,9 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                           <div style={{ flex: 3, padding: '32px 32px 32px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
                             {/* Hotel Info */}
                             <div className="hotel-header" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <h3 className="hotel-name" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', margin: 0, marginBottom: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <h3 className="hotel-name" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0, marginTop: 0, fontSize: '1.8rem', fontWeight: 800, color: '#1e293b' }}>
                                 {hotel.name}
-                                <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18, marginLeft: 8 }}>
+                                <span className="hotel-stars" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 18 }}>
                                   {Array.from({ length: 5 }, (_, i) => {
                                     const fullStars = Math.floor(hotel.stars);
                                     const hasHalfStar = hotel.stars % 1 >= 0.5;
@@ -1239,8 +1238,9 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                                   })}
                                 </span>
                               </h3>
-                              <p style={{ fontSize: '1rem', color: '#6b7280', margin: 0, marginBottom: 8 }}>{hotel.address}</p>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                              {/* Adres burada gösterilmeyecek */}
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: 0 }}>
+                                {/* Sadece rating ve review sayısı kalsın */}
                                 <span style={{ fontSize: '1rem', color: '#fbbf24' }}>{hotel.rating.toFixed(1)}</span>
                                 <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>({hotel.rating})</span>
                               </div>
@@ -1255,28 +1255,45 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                             </div>
                             {/* Description */}
                             <p style={{ fontSize: '0.95rem', color: '#4b5563', marginTop: 16, lineHeight: 1.5 }}>{hotel.description?.text}</p>
+                            {/* Adres */}
+                            <p style={{ fontSize: '1.05rem', color: '#6b7280', marginTop: 18, marginBottom: 0, fontWeight: 500, whiteSpace: 'pre-line', textAlign: 'left' }}>
+                              {hotel.address}
+                              {hotel.city?.name ? `\n${hotel.city.name}` : ''}
+                              {hotel.country?.name ? `\n${hotel.country.name}` : ''}
+                            </p>
                           </div>
                           {/* Right side: Price and Booking */}
                           <div style={{
                             flex: 1,
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-end',
-                            padding: '32px 32px 32px 0',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            minWidth: 240,
+                            maxWidth: 300,
+                            margin: '0 auto',
+                            padding: '32px 0',
                             borderLeft: '1px solid #e5e7eb',
                           }}>
                             {bestOffer && (
-                              <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', margin: 0, marginBottom: 8 }}>
-                                  {bestOffer.price.currency} {bestOffer.price.amount.toLocaleString()}
+                              <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 2 }}>
+                                  {bestOffer.price.currency}
+                                </div>
+                                <p style={{ fontSize: '2.1rem', fontWeight: 900, color: '#1e293b', margin: 0, marginTop: 0, marginBottom: 18, letterSpacing: 1 }}>
+                                  {bestOffer.price.amount.toLocaleString()}
                                   {bestOffer.price.percent > 0 && ` (${bestOffer.price.percent}% off)`}
+                                </p>
+                                <p style={{ fontSize: '0.98rem', color: '#6b7280', margin: '0 0 10px 0' }}>
+                                  {bestOffer.night} {bestOffer.night === 1 ? 'night' : 'nights'}
                                 </p>
                                 <p style={{ fontSize: '0.9rem', color: '#6b7280', textDecoration: 'line-through' }}>
                                   {bestOffer.price.currency} {bestOffer.price.oldAmount.toLocaleString()}
                                 </p>
                                 <button 
                                   className="book-btn" 
+                                  style={{ marginTop: 18 }}
                                   onClick={(e) => {
                                     e.stopPropagation(); // Prevent card click
                                     if (bestOffer) {
