@@ -55,7 +55,7 @@ const SearchPage: React.FC = () => {
 
   // Search states for currency and nationality
   const [currencySearch, setCurrencySearch] = useState('EUR');
-  const [nationalitySearch, setNationalitySearch] = useState('Germany');
+  const [nationalitySearch, setNationalitySearch] = useState('DE');
 
   // Guest count states with limits
   const [adultCount, setAdultCount] = useState(1);
@@ -834,14 +834,14 @@ const SearchPage: React.FC = () => {
                   type="text"
                   value={nationalitySearch}
                   onChange={e => {
-                    setNationalitySearch(e.target.value);
+                    setNationalitySearch(e.target.value.toUpperCase());
                     setShowNationalityDropdown(true);
                     setShowCurrencyDropdown(false);
                     setShowAutocomplete(false);
                   }}
                   onFocus={() => setShowNationalityDropdown(true)}
                   onBlur={() => setTimeout(() => setShowNationalityDropdown(false), 200)}
-                  placeholder="Nationality"
+                  placeholder="Nationality Code"
                   style={{
                     border: '1.5px solid #bbdefb',
                     borderRadius: '12px',
