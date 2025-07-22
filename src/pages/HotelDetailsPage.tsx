@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useParams, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
 import { FaSnowflake, FaUtensils, FaCar, FaGlassCheers, FaConciergeBell, FaExchangeAlt, FaHotel, FaLock, FaCouch, FaMapMarkerAlt, FaClock, FaCheckCircle, FaWifi, FaSwimmingPool, FaUmbrellaBeach, FaRegDotCircle } from 'react-icons/fa';
 import { getOffers, beginTransaction } from '../api';
@@ -618,9 +618,9 @@ const HotelDetailsPage: React.FC = () => {
             >
               {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
             </a>
-            <Link to="/find-reservation" className="nav-btn">
+            <a href="#" className="nav-btn">
               {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
@@ -748,70 +748,132 @@ const HotelDetailsPage: React.FC = () => {
       </div>
       {/* Description, Facilities & Map - YENİ GRID DÜZEN */}
       <section style={{
-        display: 'flex',
-        flexDirection: 'row',
-        gap: 0,
         maxWidth: 1200,
         margin: '48px auto 0 auto',
         padding: 0,
-        alignItems: 'stretch',
         background: 'none',
         boxShadow: 'none',
         borderRadius: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
       }}>
-        {/* Facilities & Themes (sol) */}
-        <div style={{ flex: 2, padding: '0 32px 0 0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 18px 0', color: '#16a34a', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
-            {FaConciergeBell({ style: { color: '#16a34a', fontSize: 26 } })} Facilities & Themes
-          </h2>
-          {/* Facilities Grid - all categories */}
-          {hotel?.seasons?.[0]?.facilityCategories?.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              {hotel.seasons[0].facilityCategories.map((cat: any) => (
-                <div key={cat.id || cat.name} style={{ marginBottom: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0ea5e9', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {FaRegDotCircle({ style: { color: '#0ea5e9', fontSize: 16 } })} {cat.name}
+        {/* ÜSTTE: Facilities & Location yan yana */}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch', width: '100%' }}>
+          {/* Facilities & Themes (sol) */}
+          <div style={{ flex: 2, padding: '0 32px 0 0', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+            <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 18px 0', color: '#16a34a', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
+              {FaConciergeBell({ style: { color: '#16a34a', fontSize: 26 } })} Facilities & Themes
+            </h2>
+            {/* Facilities Grid - all categories */}
+            {hotel?.seasons?.[0]?.facilityCategories?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {hotel.seasons[0].facilityCategories.map((cat: any) => (
+                  <div key={cat.id || cat.name} style={{ marginBottom: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#0ea5e9', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {FaRegDotCircle({ style: { color: '#0ea5e9', fontSize: 16 } })} {cat.name}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {cat.facilities?.map((f: any) => (
+                        <span key={f.id || f.name} style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          background: '#e0f2fe', color: '#0369a1', borderRadius: 10, padding: '6px 12px', fontWeight: 600, fontSize: 14,
+                          boxShadow: '0 2px 8px #38bdf81a', border: '1.2px solid #bae6fd', minHeight: 32,
+                        }}>
+                          <span style={{ fontSize: 16, color: '#0ea5e9', minWidth: 18 }}>{facilityIcon(f.name, { fontSize: 16, color: '#0ea5e9' })}</span>
+                          <span>{f.name}</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {cat.facilities?.map((f: any) => (
-                      <span key={f.id || f.name} style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        background: '#e0f2fe', color: '#0369a1', borderRadius: 10, padding: '6px 12px', fontWeight: 600, fontSize: 14,
-                        boxShadow: '0 2px 8px #38bdf81a', border: '1.2px solid #bae6fd', minHeight: 32,
-                      }}>
-                        <span style={{ fontSize: 16, color: '#0ea5e9', minWidth: 18 }}>{facilityIcon(f.name, { fontSize: 16, color: '#0ea5e9' })}</span>
-                        <span>{f.name}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '12px 0' }}>No details found for this section.</div>
-          )}
-          {/* Themes Badges */}
-          <div style={{ marginTop: 18 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px 0', color: '#f59e42', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {FaUmbrellaBeach({ style: { color: '#f59e42', fontSize: 18 } })} Themes
-            </h3>
-            {hotel?.themes?.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {hotel.themes.map((theme: any) => (
-                  <span key={theme.id} style={{ background: '#f59e42', color: '#fff', borderRadius: 8, padding: '6px 14px', fontWeight: 700, fontSize: 14, boxShadow: '0 2px 8px #f59e421a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {FaUmbrellaBeach({ style: { fontSize: 14, color: '#fff' } })} {theme.name}
-                  </span>
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '8px 0' }}>No details found for this section.</div>
+              <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '12px 0' }}>No details found for this section.</div>
+            )}
+            {/* Themes Badges */}
+            <div style={{ marginTop: 18 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px 0', color: '#f59e42', display: 'flex', alignItems: 'center', gap: 8 }}>
+                {FaUmbrellaBeach({ style: { color: '#f59e42', fontSize: 18 } })} Themes
+              </h3>
+              {hotel?.themes?.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {hotel.themes.map((theme: any) => (
+                    <span key={theme.id} style={{ background: '#f59e42', color: '#fff', borderRadius: 8, padding: '6px 14px', fontWeight: 700, fontSize: 14, boxShadow: '0 2px 8px #f59e421a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {FaUmbrellaBeach({ style: { fontSize: 14, color: '#fff' } })} {theme.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '8px 0' }}>No details found for this section.</div>
+              )}
+            </div>
+          </div>
+          {/* Dikey silik çizgi */}
+          <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
+          {/* Map & Contact (sağ) */}
+          <div style={{ flex: 2, padding: '0 0 0 32px', display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', justifyContent: 'flex-start' }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 12px 0', color: '#f43f5e' }}>Location</h2>
+            {/* Harita */}
+            {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude ? (
+              <iframe
+                title="Hotel Location"
+                width="100%"
+                height="260"
+                frameBorder="0"
+                style={{ borderRadius: 12, border: '1.5px solid #e0e7ef', marginBottom: 10 }}
+                src={`https://maps.google.com/maps?q=${hotel.geolocation.latitude},${hotel.geolocation.longitude}&z=15&output=embed`}
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <div style={{ width: '100%', height: 260, background: '#e0e7ef', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 16 }}>No Map</div>
+            )}
+            {/* Haritada Göster Butonu */}
+            {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${hotel.geolocation.latitude},${hotel.geolocation.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  padding: '10px 28px',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 12px #2563eb33',
+                  letterSpacing: 0.5,
+                  textDecoration: 'none',
+                  marginBottom: 8,
+                  marginTop: 0,
+                  display: 'inline-block',
+                  textAlign: 'center',
+                  transition: 'background 0.18s',
+                }}
+              >
+                Haritada Göster
+              </a>
+            )}
+            {/* Adres ve iletişim */}
+            <div style={{ color: '#232931', fontSize: 15, fontWeight: 400, marginTop: 6, textAlign: 'center', wordBreak: 'break-word' }}>
+              {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country?.name}` : ''}
+            </div>
+            {hotel?.phoneNumber && (
+              <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
+                <a href={`tel:${hotel.phoneNumber}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.phoneNumber}</a>
+              </div>
+            )}
+            {hotel?.email && (
+              <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
+                <a href={`mailto:${hotel.email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.email}</a>
+              </div>
             )}
           </div>
         </div>
-        {/* Dikey silik çizgi */}
-        <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
-        {/* Description (orta) */}
-        <div style={{ flex: 3, padding: '0 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+        {/* ALTA: Description tam genişlikte */}
+        <div style={{ width: '100%', marginTop: 36, padding: '0 8px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 12px 0', color: '#2563eb' }}>Descriptions</h2>
           {hotel?.seasons?.[0]?.textCategories?.length > 0 ? (
             hotel.seasons[0].textCategories.map((cat: any, idx: number) => (
@@ -831,68 +893,6 @@ const HotelDetailsPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ color: '#64748b', fontSize: 15, fontWeight: 600, padding: '10px 0' }}>No details found for this section.</div>
-          )}
-        </div>
-        {/* Dikey silik çizgi */}
-        <div style={{ width: 1, background: 'linear-gradient(to bottom, #e5e7eb 10%, #cbd5e1 90%)', opacity: 0.7, margin: '0 0px', minHeight: 320, alignSelf: 'stretch' }} />
-        {/* Map & Contact (sağ) */}
-        <div style={{ flex: 2, padding: '0 0 0 32px', display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', justifyContent: 'flex-start' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 12px 0', color: '#f43f5e' }}>Location</h2>
-          {/* Harita */}
-          {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude ? (
-            <iframe
-              title="Hotel Location"
-              width="100%"
-              height="180"
-              frameBorder="0"
-              style={{ borderRadius: 12, border: '1.5px solid #e0e7ef', marginBottom: 10 }}
-              src={`https://maps.google.com/maps?q=${hotel.geolocation.latitude},${hotel.geolocation.longitude}&z=15&output=embed`}
-              allowFullScreen
-            ></iframe>
-          ) : (
-            <div style={{ width: '100%', height: 180, background: '#e0e7ef', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 16 }}>No Map</div>
-          )}
-          {/* Haritada Göster Butonu */}
-          {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${hotel.geolocation.latitude},${hotel.geolocation.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                background: 'linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)',
-                color: 'white',
-                fontWeight: 700,
-                fontSize: 16,
-                padding: '10px 28px',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 12px #2563eb33',
-                letterSpacing: 0.5,
-                textDecoration: 'none',
-                marginBottom: 8,
-                marginTop: 0,
-                display: 'inline-block',
-                textAlign: 'center',
-                transition: 'background 0.18s',
-              }}
-            >
-              Haritada Göster
-            </a>
-          )}
-          {/* Adres ve iletişim */}
-          <div style={{ color: '#232931', fontSize: 15, fontWeight: 400, marginTop: 6, textAlign: 'center', wordBreak: 'break-word' }}>
-            {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country.name}` : ''}
-          </div>
-          {hotel.phoneNumber && (
-            <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
-              <a href={`tel:${hotel.phoneNumber}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.phoneNumber}</a>
-            </div>
-          )}
-          {hotel.email && (
-            <div style={{ color: '#2563eb', fontWeight: 600, fontSize: 15, marginTop: 2 }}>
-              <a href={`mailto:${hotel.email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>{hotel.email}</a>
-            </div>
           )}
         </div>
       </section>
