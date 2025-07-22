@@ -566,7 +566,7 @@ const HotelDetailsPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* HEADER (same as HotelList/SearchPage) */}
       <header style={{
         width: '100%',
@@ -628,123 +628,82 @@ const HotelDetailsPage: React.FC = () => {
       <div style={{
         width: '100%',
         maxWidth: 1200,
-        margin: '24px auto 32px auto',
-        borderRadius: 18,
-        boxShadow: '0 4px 24px #1e3a8a22',
-        background: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+        margin: '32px auto 32px auto',
+        borderRadius: 22,
+        boxShadow: '0 4px 24px #1e3a8a11',
+        background: '#fff',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'stretch',
-        gap: 0,
         padding: 0,
-        minHeight: 220,
-        height: 220,
         position: 'relative',
-        flexWrap: 'wrap',
+        overflow: 'hidden',
       }}>
-        {/* Hotel Image */}
-        <div style={{ flex: '0 0 340px', height: 220, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-start' }}>
-          {hotel?.seasons?.[0]?.mediaFiles?.length > 0 ? (
-            <img
-              src={hotel.seasons[0].mediaFiles[0].urlFull}
-              alt={hotel.name}
-              style={{ width: 340, height: 220, objectFit: 'cover', borderTopLeftRadius: 18, borderBottomLeftRadius: 18, borderTopRightRadius: 0, borderBottomRightRadius: 0, boxShadow: '0 2px 12px #0003', background: '#e0e7ef', cursor: 'pointer', display: 'block' }}
-              onClick={() => openLightbox(0)}
-            />
-          ) : hotel?.thumbnailFull ? (
-            <img src={hotel.thumbnailFull} alt={hotel.name} style={{ width: 340, height: 220, objectFit: 'cover', borderTopLeftRadius: 18, borderBottomLeftRadius: 18, borderTopRightRadius: 0, borderBottomRightRadius: 0, boxShadow: '0 2px 12px #0003', background: '#e0e7ef', cursor: 'pointer', display: 'block' }} onClick={() => openLightbox(0)} />
-          ) : (
-            <div style={{ width: 340, height: 220, borderTopLeftRadius: 18, borderBottomLeftRadius: 18, background: '#e0e7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 18 }}>No Image</div>
-          )}
-        </div>
-        {/* Hotel Info */}
-        <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center', padding: '0 32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', position: 'relative' }}>
-            <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, letterSpacing: -1, color: 'white', textShadow: '0 2px 8px #1e3a8a44' }}>{hotel?.name || 'Hotel Name'}</h1>
-            {hotel?.stars ? renderStars(hotel.stars) : null}
-            {hotel?.stars && <span style={{ fontWeight: 700, fontSize: 18, color: '#fbbf24' }}>({hotel.stars})</span>}
-            {hotel?.rating && <span style={{ fontWeight: 700, fontSize: 18, color: '#38f9d7' }}>Rating: {hotel.rating?.toFixed(2)}</span>}
-            {hotel?.themes?.map((theme: any) => (
-              <span key={theme.id} style={{ background: '#38bdf8', color: '#fff', borderRadius: 8, padding: '4px 12px', fontWeight: 700, fontSize: 15, boxShadow: '0 1px 4px #38bdf81a' }}>{theme.name}</span>
-            ))}
-            {/* Book Now butonu başlığın sağında */}
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-              <button
-                onClick={async () => {
-                  setNoOfferLoading(true);
-                  setNoOfferError(null);
-                  try {
-                    if (!offerId) {
-                      setNoOfferError('Fiyat bulunamadı.');
-                      setNoOfferLoading(false);
-                      return;
-                    }
-                    const token = localStorage.getItem('authToken');
-                    if (!token) {
-                      setNoOfferError('Authentication token not found');
-                      setNoOfferLoading(false);
-                      return;
-                    }
-                    const response = await beginTransaction({
-                      token,
-                      offerIds: [offerId],
-                      currency: 'EUR',
-                      culture: 'en-US'
-                    });
-                    if (response.body) {
-                      navigate('/booking', {
-                        state: {
-                          transactionData: response.body,
-                          hotelData: hotel,
-                          offerData: { offerId }
-                        }
-                      });
-                    } else {
-                      setNoOfferError('Transaction başlatılamadı');
-                    }
-                  } catch (err) {
-                    setNoOfferError('Transaction başlatılamadı');
-                  } finally {
-                    setNoOfferLoading(false);
-                  }
-                }}
-                disabled={noOfferLoading}
-                style={{
-                  background: 'linear-gradient(90deg, #2563eb 0%, #1e3a8a 100%)',
-                  color: 'white',
-                  fontWeight: 800,
-                  fontSize: 18,
-                  padding: '10px 28px',
-                  border: 'none',
-                  borderRadius: 10,
-                  cursor: noOfferLoading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 12px #2563eb33',
-                  letterSpacing: 1,
-                  marginLeft: 18,
-                  outline: 'none',
-                  textShadow: '0 2px 8px #1e3a8a44',
-                  transition: 'background 0.2s, box-shadow 0.2s, transform 0.1s',
-                  minWidth: 140
-                }}
-              >
-                {noOfferLoading ? 'Processing...' : 'Book Now'}
-              </button>
-              {noOfferError && (
-                <span style={{ color: '#f43f5e', fontWeight: 700, fontSize: 16, marginLeft: 12 }}>{noOfferError}</span>
-              )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 16, fontWeight: 500, color: 'white', textShadow: '0 1px 4px #1e3a8a44' }}>
-            <span>📍 {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || 'No address'}, {hotel?.country?.name || ''}</span>
-            {hotel?.geolocation?.latitude && hotel?.geolocation?.longitude && (
-              <a
-                href={getMapLink(hotel.geolocation.latitude, hotel.geolocation.longitude)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 700, textDecoration: 'underline', fontSize: 16 }}
-              >
-                Show on Map
-              </a>
+        {/* Galeri grid */}
+        <div style={{ display: 'flex', width: '100%', height: 340, gap: 0 }}>
+          {/* Sol büyük görsel */}
+          <div style={{ flex: '0 0 48%', height: 340, position: 'relative' }}>
+            {images.length > 0 ? (
+              <img
+                src={images[0]}
+                alt={hotel?.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderTopLeftRadius: 22, borderBottomLeftRadius: 22 }}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: '#e0e7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 700, fontSize: 18, borderTopLeftRadius: 22, borderBottomLeftRadius: 22 }}>No Image</div>
             )}
+          </div>
+          {/* Sağ küçük grid */}
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, height: 340 }}>
+            {images.slice(1, 5).map((img: any, idx: number) => (
+              <div key={img} style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <img src={img} alt={hotel?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {/* Son görselde +N etiketi */}
+                {idx === 3 && images.length > 5 && (
+                  <div style={{ position: 'absolute', right: 10, bottom: 10, background: 'rgba(0,0,0,0.65)', color: '#fff', fontWeight: 700, fontSize: 18, borderRadius: 12, padding: '4px 16px' }}>
+                    +{images.length - 4}
+                  </div>
+                )}
+              </div>
+            ))}
+            {/* Eğer 4'ten az küçük görsel varsa boş kutu ekle */}
+            {Array.from({ length: Math.max(0, 4 - (images.length - 1)) }).map((_, i) => (
+              <div key={i} style={{ background: '#e0e7ef', width: '100%', height: '100%' }} />
+            ))}
+          </div>
+        </div>
+        {/* Başlık ve adres alanı */}
+        <div style={{ padding: '32px 40px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <h1 style={{ fontSize: 38, fontWeight: 900, margin: 0, color: '#181818', letterSpacing: -1 }}>{hotel?.name || 'Hotel Name'}</h1>
+            {hotel?.stars && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 28, marginLeft: 8 }}>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const fullStars = Math.floor(hotel.stars);
+                  const hasHalfStar = hotel.stars % 1 >= 0.5;
+                  if (i < fullStars) return <span key={i}>{starSvg('#fbbf24')}</span>;
+                  if (i === fullStars && hasHalfStar) {
+                    return (
+                      <span key={i}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
+                          <defs>
+                            <linearGradient id={`half-star-${hotel.id}-${i}`} x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="50%" stopColor="#fbbf24"/>
+                              <stop offset="50%" stopColor="#d1d5db"/>
+                            </linearGradient>
+                          </defs>
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#half-star-${hotel.id}-${i})`} />
+                        </svg>
+                      </span>
+                    );
+                  }
+                  return <span key={i}>{starSvg('#d1d5db')}</span>;
+                })}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 18, color: '#232931', fontWeight: 400, marginTop: 6 }}>
+            {hotel?.address?.addressLines?.join(', ') || hotel?.city?.name || ''}{hotel?.country?.name ? `, ${hotel.country.name}` : ''}
           </div>
         </div>
       </div>
@@ -832,7 +791,7 @@ const HotelDetailsPage: React.FC = () => {
         </div>
       ) : null}
       {/* Description Card (by seasons[0].textCategories) or fallback */}
-      <section style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #0001', padding: '32px 36px', marginBottom: 0, animation: 'fadeInUp 0.5s', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 2px 12px #0001', padding: '36px 40px', marginBottom: 0, animation: 'fadeInUp 0.5s', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 18px 0', color: '#2563eb' }}>Descriptions</h2>
         {hotel?.seasons?.[0]?.textCategories?.length > 0 ? (
           hotel.seasons[0].textCategories.map((cat: any, idx: number) => (
@@ -855,7 +814,7 @@ const HotelDetailsPage: React.FC = () => {
         )}
       </section>
       {/* Facilities & Themes Section */}
-      <section style={{ background: '#fff', borderRadius: 18, boxShadow: '0 4px 24px #1e3a8a11', padding: '40px 44px', animation: 'fadeInUp 0.5s', marginTop: 8 }}>
+      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 4px 24px #1e3a8a11', padding: '44px 48px', animation: 'fadeInUp 0.5s', marginTop: 12 }}>
         <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 28px 0', color: '#16a34a', letterSpacing: -1, display: 'flex', alignItems: 'center', gap: 12 }}>
           {FaConciergeBell({ style: { color: '#16a34a', fontSize: 32 } })} Facilities & Themes
         </h2>
@@ -921,7 +880,7 @@ const HotelDetailsPage: React.FC = () => {
         </div>
       </section>
       {/* Contact & Map Section */}
-      <section style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #0001', padding: '32px 36px', animation: 'fadeInUp 0.5s', marginTop: 24, marginBottom: 32 }}>
+      <section style={{ background: '#fff', borderRadius: 22, boxShadow: '0 2px 12px #0001', padding: '36px 40px', animation: 'fadeInUp 0.5s', marginTop: 24, marginBottom: 32 }}>
         <h2 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 18px 0', color: '#f43f5e' }}>Contact & Location</h2>
         {(hotel?.address || hotel?.phoneNumber || hotel?.faxNumber || hotel?.email || hotel?.homePage || hotel?.website || hotel?.geolocation || hotel?.address?.geolocation || hotel?.location) ? (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
@@ -999,7 +958,7 @@ const HotelDetailsPage: React.FC = () => {
         )}
       </section>
       {/* Offers Section */}
-      <section style={{ maxWidth: 900, margin: '48px auto 0 auto', padding: '36px 0', borderRadius: 18, background: '#fff', boxShadow: '0 2px 12px #0001', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+      <section style={{ maxWidth: 900, margin: '48px auto 0 auto', padding: '40px 0', borderRadius: 22, background: '#fff', boxShadow: '0 2px 12px #0001', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
         <h2 style={{ fontSize: 28, fontWeight: 900, color: '#2563eb', marginBottom: 0, letterSpacing: -1 }}>Offers</h2>
         <button
           onClick={fetchOffers}
@@ -1541,63 +1500,57 @@ const HotelDetailsPage: React.FC = () => {
         </div>
       )}
 
-        {/* Footer */}
-        <footer className="footer" style={{ marginTop: '50px', backgroundColor: '#1e3a8a', color: 'white', padding: '40px 0 20px 0' }}>
-          <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-            <div className="footer-section" style={{ marginBottom: '30px' }}>
-              <h3 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img 
-                  src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
-                  alt="HotelRes Logo"
-                  style={{ height: 48, borderRadius: 12, marginRight: 14, verticalAlign: 'middle' }}
-                />
-                HotelRes
-              </h3>
-              <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>Your trusted partner for the best hotel experience</p>
-              <div className="social-links" style={{ display: 'flex', gap: '15px' }}>
-                <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📘 Facebook</a>
-                <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>📷 Instagram</a>
-                <a href="#" className="social-link" style={{ color: 'white', textDecoration: 'none', padding: '8px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}>🐦 Twitter</a>
-              </div>
+        {/* Footer - minimalist, hizalı, emojisiz, hotel listeleme ile aynı */}
+        <footer className="footer" style={{
+          marginTop: '3.5rem',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+          color: 'white',
+          padding: '3.5rem 0 1.5rem 0',
+          width: '100%',
+          border: 'none',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
+          zIndex: 1
+        }}>
+          <div className="footer-content" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2.5rem', position: 'relative', zIndex: 3 }}>
+            <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: '1.08rem', marginBottom: 8 }}>Your trusted partner for the best hotel experience</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Facebook</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Instagram</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>Twitter</div>
             </div>
-            
-            <div className="footer-section" style={{ marginBottom: '30px' }}>
-              <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>🔍 Quick Access</h4>
-              <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🏠 Home Page</a></li>
-                <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>🔍 Search Hotels</a></li>
-                <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>📋 My Reservations</a></li>
-                <li style={{ marginBottom: '10px' }}><a href="#" style={{ color: 'white', textDecoration: 'none', transition: 'color 0.3s ease' }}>⭐ My favorites</a></li>
-              </ul>
+            <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Quick Access</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Home Page</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Search Hotels</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>My Reservations</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>My favorites</div>
             </div>
-            
-            <div className="footer-section" style={{ marginBottom: '30px' }}>
-              <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>📞 Contact</h4>
-              <ul className="footer-links" style={{ listStyle: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '10px', color: 'white' }}>📧 info@hotelres.com</li>
-                <li style={{ marginBottom: '10px', color: 'white' }}>📱 +90 212 555 0123</li>
-                <li style={{ marginBottom: '10px', color: 'white' }}>📍 Antalya, Turkey</li>
-                <li style={{ marginBottom: '10px', color: 'white' }}>🕒 7/24 Support</li>
-              </ul>
+            <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Contact</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>info@hotelres.com</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>+90 212 555 0123</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem', marginBottom: 8 }}>Antalya, Turkey</div>
+              <div style={{ color: '#b0b0b0', fontSize: '1rem' }}>7/24 Support</div>
             </div>
-            
-            <div className="footer-section" style={{ marginBottom: '30px' }}>
-              <h4 style={{ color: '#fbbf24', marginBottom: '15px', fontSize: '1.2rem' }}>💳 Payment Methods</h4>
-              <div className="payment-methods" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 Visa</span>
-                <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 MasterCard</span>
-                <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>💳 PayPal</span>
-                <span className="payment-method" style={{ color: 'white', padding: '6px 10px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.9rem' }}>🏦 Bank Transfer</span>
+            <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.08rem', marginBottom: 8, color: 'white', borderLeft: '3px solid #7c83fd', paddingLeft: 8 }}>Payment Methods</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>Visa</span>
+                <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>MasterCard</span>
+                <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>PayPal</span>
+                <span style={{ color: '#b0b0b0', fontSize: '1rem', border: '1px solid #7c83fd', borderRadius: 16, padding: '4px 16px', fontWeight: 500 }}>Bank Transfer</span>
               </div>
             </div>
           </div>
-          
-          <div className="footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', marginTop: '30px', paddingTop: '20px', textAlign: 'center' }}>
-            <p style={{ marginBottom: '15px', color: 'rgba(255,255,255,0.8)' }}>&copy; 2025 HotelRes. All rights reserved.</p>
-            <div className="footer-bottom-links" style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-              <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Privacy Policy</a>
-              <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Terms of Use</a>
-              <a href="#" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.3s ease' }}>Cookie Policy</a>
+          <div style={{ borderTop: '1px solid #2d3250', margin: '2.5rem 0 0 0', width: '100%' }}></div>
+          <div className="footer-bottom" style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.2rem 2rem 0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1, color: '#b0b0b0', fontSize: '1rem' }}>
+            <span>© 2025 HotelRes. All rights reserved.</span>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Privacy Policy</a>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Terms of Use</a>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '1rem', textDecoration: 'none' }}>Cookie Policy</a>
             </div>
           </div>
         </footer>
