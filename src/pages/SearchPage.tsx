@@ -578,6 +578,113 @@ const SearchPage: React.FC = () => {
   const [checkInCalendarPos, setCheckInCalendarPos] = useState({ top: 0, left: 0, width: 0 });
   const [checkOutCalendarPos, setCheckOutCalendarPos] = useState({ top: 0, left: 0, width: 0 });
 
+  // Popüler destinasyonlar (sadece isim)
+  const popularDestinations = [
+    { name: 'Antalya' },
+    { name: 'New York' },
+    { name: 'Istanbul' },
+    { name: 'Izmir' },
+    { name: 'Paris' },
+    { name: 'Rome' },
+    { name: 'Bangkok' },
+    { name: 'Dubai' },
+    { name: 'Attica (Athens and surrounding area)' },
+    { name: 'London' },
+  ];
+
+  const cityImages: Record<string, string> = {
+    'Antalya': '/Antalya.jpg',
+    'New York': '/New York.jpg',
+    'Istanbul': '/Istanbul.jpg',
+    'Izmir': '/Izmir.jpg',
+    'Paris': '/Paris.jpg',
+    'Rome': '/Rome.jpg',
+    'Bangkok': '/Bangkok.jpg',
+    'Dubai': '/Dubai.jpg',
+    'Attica (Athens and surrounding area)': '/Athens.jpg',
+    'London': '/London.jpg',
+  };
+
+  // Popüler destinasyona tıklanınca önce autocomplete, sonra pricesearch
+  const handlePopularDestinationClick = async (destination: { name: string }) => {
+    try {
+      const response = await fetch('http://localhost:8080/search/autocomplete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
+        },
+        body: JSON.stringify({ query: destination.name, productType: 2, culture: 'en-US' }),
+      });
+      const data = await response.json();
+      const items = data.body?.items || [];
+      const match = items.find((item: any) =>
+        item.type === 2 && item.city?.name?.toLowerCase().includes(destination.name.toLowerCase())
+      ) || items.find((item: any) => item.type === 2);
+      console.log('Otomatik seçilen şehir:', match);
+      if (!match) {
+        alert('Şehir bulunamadı!');
+        return;
+      }
+      // Bugünden başlayarak 2 gece
+      const today = new Date();
+      const checkIn = today.toISOString().split('T')[0];
+      const checkOutDate = new Date(today);
+      checkOutDate.setDate(today.getDate() + 2);
+      const checkOut = checkOutDate.toISOString().split('T')[0];
+
+      // PriceSearch parametreleri
+      const priceSearchRequest = {
+        checkAllotment: true,
+        checkStopSale: true,
+        getOnlyDiscountedPrice: false,
+        getOnlyBestOffers: true,
+        productType: 2,
+        roomCriteria: [{ adult: 1 }],
+        nationality: 'DE',
+        checkIn,
+        night: 2,
+        currency: 'EUR',
+        culture: 'en-US',
+        arrivalLocations: [{ id: match.city.id, type: 2 }],
+      };
+
+      const token = localStorage.getItem('authToken') || '';
+      const priceRes = await fetch('http://localhost:8080/api/pricesearch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(priceSearchRequest),
+      });
+      if (!priceRes.ok) {
+        alert('Otel arama başarısız!');
+        return;
+      }
+      const priceData = await priceRes.json();
+
+      // HotelList'e yönlendir, arama parametrelerini state ile ilet
+      const searchParams = {
+        destination: match.city.id,
+        destinationName: match.city.name,
+        destinationType: 2,
+        checkIn,
+        checkOut,
+        guests: 1,
+        rooms: 1,
+        currency: 'EUR',
+        nationality: 'DE',
+        roomDetails: [{ adults: 1, children: 0, childAges: [] }],
+        priceSearchResult: priceData.body || null,
+      };
+      localStorage.setItem('lastHotelSearchParams', JSON.stringify(searchParams));
+      navigate('/hotels', { state: { searchParams } });
+    } catch (err) {
+      alert('Şehir veya otel bilgisi alınırken hata oluştu!');
+    }
+  };
+
   useEffect(() => {
     // Sayfa yüklendiğinde otomatik login yap
     performAutoLogin();
@@ -1366,6 +1473,152 @@ const SearchPage: React.FC = () => {
                                 </div>
                               </div>
                             )}
+      {/* Search bar ve footer arasına popüler destinasyonlar bölümü ekle */}
+      <div style={{
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  margin: '48px 0',
+  background: 'linear-gradient(90deg, #bbdefb 0%, #2563eb 100%)',
+  padding: '48px 0 56px 0',
+  borderRadius: 32,
+  boxShadow: '0 8px 32px #2563eb22',
+}}>
+  <h2 style={{ fontSize: 32, fontWeight: 900, marginBottom: 36, color: '#232931', letterSpacing: 1, textShadow: '0 2px 8px #fff8' }}>Popular Destinations</h2>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', justifyContent: 'center' }}>
+    {/* İlk 5 şehir: Daireler */}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-end', marginBottom: 0 }}>
+      {popularDestinations.slice(0, 5).map((dest) => {
+        const imgSrc = cityImages[dest.name] || '';
+        return (
+          <div key={dest.name} style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button
+              onClick={() => handlePopularDestinationClick(dest)}
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                border: 'none',
+                background: 'linear-gradient(135deg, #e0e7ef 0%, #bbdefb 100%)',
+                boxShadow: '0 4px 24px #2563eb22',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                fontSize: 36,
+                fontWeight: 800,
+                color: '#232931',
+                outline: 'none',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'scale(1.08)';
+                e.currentTarget.style.boxShadow = '0 8px 32px #2563eb44';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 24px #2563eb22';
+              }}
+            >
+              {imgSrc ? (
+                <img src={imgSrc} alt={dest.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: 38, fontWeight: 900, color: '#232931', userSelect: 'none' }}>{dest.name[0]}</span>
+              )}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+    {/* İlk 5 şehir: İsimler */}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-start' }}>
+      {popularDestinations.slice(0, 5).map((dest) => (
+        <div key={dest.name} style={{ minWidth: 120, textAlign: 'center' }}>
+          <span style={{
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            color: '#232931',
+            letterSpacing: 0.5,
+            maxWidth: 120,
+            lineHeight: 1.2,
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
+            overflow: 'hidden',
+            display: 'block',
+          }}>{dest.name}</span>
+        </div>
+      ))}
+    </div>
+    {/* Sonraki 5 şehir: Daireler */}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-end', marginTop: 24, marginBottom: 0 }}>
+      {popularDestinations.slice(5, 10).map((dest) => {
+        const imgSrc = cityImages[dest.name] || '';
+        return (
+          <div key={dest.name} style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button
+              onClick={() => handlePopularDestinationClick(dest)}
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                border: 'none',
+                background: 'linear-gradient(135deg, #e0e7ef 0%, #bbdefb 100%)',
+                boxShadow: '0 4px 24px #2563eb22',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                fontSize: 36,
+                fontWeight: 800,
+                color: '#232931',
+                outline: 'none',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'scale(1.08)';
+                e.currentTarget.style.boxShadow = '0 8px 32px #2563eb44';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 24px #2563eb22';
+              }}
+            >
+              {imgSrc ? (
+                <img src={imgSrc} alt={dest.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: 38, fontWeight: 900, color: '#232931', userSelect: 'none' }}>{dest.name[0]}</span>
+              )}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+    {/* Sonraki 5 şehir: İsimler */}
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-start' }}>
+      {popularDestinations.slice(5, 10).map((dest) => (
+        <div key={dest.name} style={{ minWidth: 120, textAlign: 'center' }}>
+          <span style={{
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            color: '#232931',
+            letterSpacing: 0.5,
+            maxWidth: 120,
+            lineHeight: 1.2,
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
+            overflow: 'hidden',
+            display: 'block',
+          }}>{dest.name}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
       <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
         <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
           <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>

@@ -250,12 +250,9 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
 
   const getBestOffer = (hotel: Hotel) => {
     if (!hotel.offers || hotel.offers.length === 0) return null;
-    
-    // Sort by price and return the cheapest available offer
-    const availableOffers = hotel.offers.filter(offer => offer.available);
-    if (availableOffers.length === 0) return null;
-    
-    return availableOffers.sort((a, b) => a.price.amount - b.price.amount)[0];
+    // Fiyatı olan ilk offer'ı bul
+    const offerWithPrice = hotel.offers.find(offer => offer.price && offer.price.amount);
+    return offerWithPrice || null;
   };
 
   const getFacilityIcon = (facilityName: string) => {
