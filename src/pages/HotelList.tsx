@@ -745,7 +745,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             height: 56,
             background: '#fff',
             borderRadius: 24,
-            border: '3px solid #fbbf24',
+            border: '3px solid #232931',
             boxSizing: 'border-box',
             boxShadow: 'none',
             position: 'relative',
@@ -798,7 +798,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               />
               {destinationQuery && <span style={{ marginLeft: 8, color: '#888', fontSize: 20, cursor: 'pointer' }} onClick={() => { setDestinationQuery(''); setSelectedDestination(null); setAutocompleteResults([]); setShowAutocomplete(false); }}>×</span>}
               {showAutocomplete && (
-                <div className="autocomplete-dropdown" style={{ position: 'absolute', top: 56, left: 0, right: 0, background: '#fff', border: '1.5px solid #fbbf24', borderRadius: 12, zIndex: 50, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px #2563eb22' }}>
+                <div className="autocomplete-dropdown" style={{ position: 'absolute', top: 56, left: 0, right: 0, background: '#fff', border: '1.5px solid #232931', borderRadius: 12, zIndex: 50, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px #2563eb22' }}>
                   {loadingAutocomplete ? (
                     <div className="autocomplete-loading">⏳</div>
                   ) : autocompleteResults.length > 0 ? (
@@ -868,7 +868,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               )}
             </div>
             {/* Separator */}
-            <div style={{ width: 1.5, height: 40, background: '#fbbf24' }} />
+            <div style={{ width: 1.5, height: '100%', background: '#232931' }} />
             {/* Dates */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', height: '100%', padding: '0 24px', background: '#fff', boxSizing: 'border-box', position: 'relative', gap: 12 }}>
               {FaCalendarAlt({ style: { fontSize: 22, color: '#eab308', marginRight: 12 } })}
@@ -888,7 +888,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               </span>
               {/* Check-in takvim popup */}
               {showCheckInCalendar && (
-                <div className="calendar-widget" style={{ position: 'absolute', top: 56, left: 0, zIndex: 100, background: '#fff', border: '1.5px solid #fbbf24', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
+                <div className="calendar-widget" style={{ position: 'absolute', top: 56, left: 0, zIndex: 100, background: '#fff', border: '1.5px solid #232931', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
                   <button type="button" style={{ position: 'absolute', top: 4, right: 8, background: 'none', border: 'none', fontSize: 26, fontWeight: 900, color: '#888', cursor: 'pointer', zIndex: 101, padding: 0, lineHeight: 1.1 }} onClick={() => setShowCheckInCalendar(false)}>×</button>
                   <div className="calendar-header">
                     <button type="button" className="calendar-nav-btn" onClick={() => navigateMonth('prev')}>▲</button>
@@ -925,7 +925,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               )}
               {/* Check-out takvim popup */}
               {showCheckOutCalendar && (
-                <div className="calendar-widget" style={{ position: 'absolute', top: 56, left: 180, zIndex: 100, background: '#fff', border: '1.5px solid #fbbf24', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
+                <div className="calendar-widget" style={{ position: 'absolute', top: 56, left: 180, zIndex: 100, background: '#fff', border: '1.5px solid #232931', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
                   <button type="button" style={{ position: 'absolute', top: 4, right: 8, background: 'none', border: 'none', fontSize: 26, fontWeight: 900, color: '#888', cursor: 'pointer', zIndex: 101, padding: 0, lineHeight: 1.1 }} onClick={() => setShowCheckOutCalendar(false)}>×</button>
                   <div className="calendar-header">
                     <button type="button" className="calendar-nav-btn" onClick={() => navigateCheckOutMonth('prev')}>▲</button>
@@ -961,7 +961,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
               )}
             </div>
             {/* Separator */}
-            <div style={{ width: 1.5, height: 40, background: '#fbbf24' }} />
+            <div style={{ width: 1.5, height: '100%', background: '#232931' }} />
             {/* Guests & Rooms */}
             <div style={{
               flex: 1,
@@ -982,7 +982,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                 <span style={{ marginLeft: 8, color: '#222', fontSize: 16, userSelect: 'none', cursor: 'pointer' }}>▼</span>
               </span>
               {showGuestRoomDropdown && (
-                <div className="guest-room-dropdown" style={{ position: 'absolute', top: 56, right: 0, zIndex: 100, background: '#fff', border: '1.5px solid #fbbf24', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
+                <div className="guest-room-dropdown" style={{ position: 'absolute', top: 56, right: 0, zIndex: 100, background: '#fff', border: '1.5px solid #232931', borderRadius: 12, boxShadow: '0 4px 24px #2563eb22', padding: 16, minWidth: 320 }}>
                   <button type="button" style={{ position: 'absolute', top: 8, right: 12, background: 'none', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer', zIndex: 101 }} onClick={() => setShowGuestRoomDropdown(false)}>×</button>
                   {rooms.map((room, idx) => (
                     <div key={idx} style={{ marginBottom: 12, borderBottom: idx < rooms.length - 1 ? '1px solid #eee' : 'none', paddingBottom: 8 }}>
@@ -1037,7 +1037,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
                               max={17}
                               value={age}
                               onChange={e => updatePendingChildAge(idx, Number(e.target.value))}
-                              style={{ width: 60, padding: 4, borderRadius: 6, border: '1.5px solid #fbbf24', fontSize: 16 }}
+                              style={{ width: 60, padding: 4, borderRadius: 6, border: '1.5px solid #232931', fontSize: 16 }}
                             />
                           </div>
                         ))}

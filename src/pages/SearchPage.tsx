@@ -1243,7 +1243,7 @@ const SearchPage: React.FC = () => {
                 <div style={{ position: 'absolute', top: 76, left: 0, zIndex: 100, background: '#fff', border: '1.5px solid #e0e7ef', borderRadius: 12, boxShadow: '0 8px 32px #2563eb22', padding: 18, minWidth: 260 }}>
                   {rooms.map((room, index) => (
                     <div key={room.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
-                      <span style={{ fontWeight: 700 }}>Room {index + 1}:</span>
+                      <span style={{ fontWeight: 700,  whiteSpace: 'nowrap' }}>Room {index + 1}:</span>
                       <span>Adults</span>
                       <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)} disabled={room.adults <= 1} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700, marginLeft: 2 }}>-</button>
                       <span style={{ fontWeight: 700 }}>{room.adults}</span>
