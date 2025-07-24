@@ -184,8 +184,10 @@ body {
 }
 
 .hotel-card:hover {
-  box-shadow: 0 6px 24px rgba(80,80,160,0.14);
-  border: 1px solid #e0e7ef;
+  box-shadow: 0 12px 32px rgba(80,80,160,0.18);
+  border: 1.5px solid #2563eb;
+  transform: translateY(-8px);
+  transition: box-shadow 0.2s, border 0.2s, transform 0.2s;
 }
 
 .hotel-image {
