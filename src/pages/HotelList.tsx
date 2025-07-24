@@ -69,6 +69,18 @@ interface HotelListProps {
   };
 }
 
+const AnimatedSearchingText: React.FC = () => {
+  const texts = ['Searching for hotels', 'Searching for hotels.', 'Searching for hotels..', 'Searching for hotels...'];
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex(i => (i + 1) % texts.length);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+  return <p style={{ fontSize: 22, color: '#059669', fontWeight: 700, marginTop: 24 }}>{texts[index]}</p>;
+};
+
 const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,7 +90,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   const [searchId, setSearchId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'stars'>('price');
+  const [sortBy, setSortBy] = useState<string>('price');
   const [filterStars, setFilterStars] = useState<number[]>([]);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 10000 });
   
@@ -117,6 +129,13 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   // Dinamik currency ve nationality listeleri
   const [currencyList, setCurrencyList] = useState<string[]>([]);
   const [nationalityList, setNationalityList] = useState<string[]>([]);
+
+  // Sıralama seçenekleri
+  const sortOptions = [
+    { value: 'price', label: 'Sort by Price' },
+    { value: 'rating', label: 'Sort by Rating' },
+    { value: 'stars', label: 'Sort by Stars' },
+  ];
 
   useEffect(() => {
     if (searchParams) {
@@ -439,7 +458,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
     return (
       <div className="hotel-list-loading">
         <div className="loading-spinner"></div>
-        <p>Searching for hotels...</p>
+        <AnimatedSearchingText />
       </div>
     );
   }
@@ -692,9 +711,9 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       {/* HEADER */}
       <header style={{
         width: '100%',
-        background: '#1e3a8a',
+        background: '#0a2342', // Skyscanner tarzı çok koyu lacivert
         boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        padding: '64px 0 48px 0', // daha da yüksek
+        padding: '90px 0 70px 0',
         marginBottom: 32,
         position: 'sticky',
         top: 0,
@@ -1156,39 +1175,64 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
             border: 'none',
             marginTop: 48,
           }}>
-            <div className="header-center" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 8 }}>
-              <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1e293b', margin: 0, marginBottom: 0, display: 'flex', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+            <div className="header-center" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 18 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img 
                   src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
                   alt="HotelRes Logo"
                   style={{ height: 48, borderRadius: 12, marginRight: 16, verticalAlign: 'middle' }}
                 />
-                Hotels in {searchParams?.destinationName || 'Unknown'}
-              </h1>
-              <p style={{ textAlign: 'center', margin: 0 }}>
-                {searchParams?.checkIn} - {searchParams?.checkOut} • 
-                {searchParams?.guests} Guest{searchParams?.guests !== 1 ? 's' : ''} • 
+                <span style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1e293b', margin: 0, marginBottom: 0, display: 'flex', alignItems: 'center', textAlign: 'center' }}>
+                  Hotels in {searchParams?.destinationName || 'Unknown'}
+                </span>
+              </span>
+              <span style={{fontSize: 18, color: '#888'}}>&#8226;</span>
+              <span style={{ fontSize: 22, color: '#232323', fontWeight: 400 }}>
+                {searchParams?.checkIn} - {searchParams?.checkOut}
+              </span>
+              <span style={{fontSize: 18, color: '#888'}}>&#8226;</span>
+              <span style={{ fontSize: 22, color: '#232323', fontWeight: 400 }}>
+                {searchParams?.guests} Guest{searchParams?.guests !== 1 ? 's' : ''}
+              </span>
+              <span style={{fontSize: 18, color: '#888'}}>&#8226;</span>
+              <span style={{ fontSize: 22, color: '#232323', fontWeight: 400 }}>
                 {searchParams?.rooms} Room{searchParams?.rooms !== 1 ? 's' : ''}
-              </p>
-              <p className="results-count" style={{ textAlign: 'center', margin: 0 }}>
+              </span>
+              <span style={{fontSize: 18, color: '#888'}}>&#8226;</span>
+              <span style={{ fontSize: 22, color: '#232323', fontWeight: 400 }}>
                 {filteredAndSortedHotels.length} hotel{filteredAndSortedHotels.length !== 1 ? 's' : ''} found
-              </p>
+              </span>
             </div>
           </div>
           {/* Alt çizgi ve renk geçişli bar tamamen kaldırıldı */}
-          <div style={{width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', borderBottom: '1.5px solid #e5e7eb'}} />
+          {/* <div style={{width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', borderBottom: '1.5px solid #e5e7eb'}} /> */}
           {/* Sort by Price dropdown'u başlığın altına al */}
-          <div style={{width: '100%', maxWidth: 1400, margin: '0 auto', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '4px 0 0 0'}}>
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value as 'price' | 'rating' | 'stars')}
-              className="sort-select"
-              style={{minWidth: 180}}
-            >
-              <option value="price">Sort by Price</option>
-              <option value="rating">Sort by Rating</option>
-              <option value="stars">Sort by Stars</option>
-            </select>
+          <div style={{ width: '100%', maxWidth: 1400, margin: '0 auto', padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 10, marginBottom: 10, marginLeft: 300 }}>
+              {sortOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value)}
+                  style={{
+                    background: '#fff',
+                    color: '#232323',
+                    border: sortBy === opt.value ? '2px solid #232323' : '1px solid #232323',
+                    borderRadius: 8,
+                    fontWeight: 400,
+                    fontSize: 15,
+                    padding: '6px 38px',
+                    minWidth: 140,
+                    height: 38,
+                    cursor: 'pointer',
+                    boxShadow: 'none',
+                    transition: 'all 0.18s',
+                    outline: 'none',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="hotel-list-content" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0 }}>

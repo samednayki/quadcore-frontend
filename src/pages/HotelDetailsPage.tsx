@@ -948,7 +948,14 @@ const HotelDetailsPage: React.FC = () => {
         )}
         {/* Offers Cards */}
         {offersData && Array.isArray(offersData.offers) && offersData.offers.length > 0 ? (
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0, marginTop: 16 }}>
+          <div style={{
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '24px',
+            marginTop: 16,
+            alignItems: 'stretch',
+          }}>
             {offersData.offers.map((offer: any, idx: number) => (
               <div key={idx} style={{
                 background: '#fff',
@@ -956,10 +963,14 @@ const HotelDetailsPage: React.FC = () => {
                 borderRadius: 16,
                 boxShadow: '0 2px 8px #0001',
                 padding: 24,
-                marginBottom: 18,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 12,
+                minHeight: 180,
+                justifyContent: 'space-between',
+                transition: 'box-shadow 0.18s, border 0.18s',
+                cursor: 'pointer',
+                position: 'relative',
               }}>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#181818', marginBottom: 8 }}>
                   {offer.rooms?.[0]?.roomName || 'Room'} - {offer.price?.currency} {offer.price?.amount}
@@ -1003,6 +1014,14 @@ const HotelDetailsPage: React.FC = () => {
         ) : (
           <div style={{ color: '#64748b', fontSize: 18, fontWeight: 600, padding: '18px 0' }}>No other offers</div>
         )}
+        {/* Responsive: Mobilde tek sütun */}
+        <style>{`
+          @media (max-width: 900px) {
+            section[style*='max-width: 900px'] > div[style*='display: grid'] {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </section>
 
       {/* OFFER DETAILS MODAL */}
