@@ -528,11 +528,11 @@ const SearchPage: React.FC = () => {
       setLoadingAutocomplete(false);
     }
   };
-
+  const roomRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [childModalPos, setChildModalPos] = useState<{ left: number; top: number; width: number }>({ left: 0, top: 0, width: 0 });
   // Modal açıldığında yaşları ayarla
   const openChildAgeModal = (roomId: number, newChildCount: number, currentAges: number[]) => {
     setPendingRoomId(roomId);
-    // Yeni çocuk ekleniyorsa varsayılan yaş 5 ekle
     let ages = [...currentAges];
     if (newChildCount > currentAges.length) {
       for (let i = currentAges.length; i < newChildCount; i++) {
@@ -542,6 +542,15 @@ const SearchPage: React.FC = () => {
       ages = ages.slice(0, newChildCount);
     }
     setPendingChildAges(ages);
+    // Room dropdown'unun pozisyonunu al
+    if (guestRoomDropdownRef.current) {
+      const rect = guestRoomDropdownRef.current.getBoundingClientRect();
+      setChildModalPos({
+        left: rect.left + window.scrollX,
+        top: rect.bottom + window.scrollY,
+        width: rect.width,
+      });
+    }
     setShowChildAgeModal(true);
   };
 
@@ -571,25 +580,29 @@ const SearchPage: React.FC = () => {
 
   // Guests dropdown modal state
   const [showGuestsDropdown, setShowGuestsDropdown] = useState(false);
+  const [showGuestRoomDropdown, setShowGuestRoomDropdown] = useState(false);
 
   // Check-in ve check-out inputları için ref ekle
   const checkInRef = useRef<HTMLInputElement | null>(null);
   const checkOutRef = useRef<HTMLInputElement | null>(null);
+  const guestRoomDropdownRef = useRef<HTMLDivElement | null>(null);
+  const checkInCalendarRef = useRef<HTMLDivElement | null>(null);
+  const checkOutCalendarRef = useRef<HTMLDivElement | null>(null);
   const [checkInCalendarPos, setCheckInCalendarPos] = useState({ top: 0, left: 0, width: 0 });
   const [checkOutCalendarPos, setCheckOutCalendarPos] = useState({ top: 0, left: 0, width: 0 });
 
   // Popüler destinasyonlar (sadece isim)
   const popularDestinations = [
-    { name: 'Antalya' },
-    { name: 'New York' },
-    { name: 'Istanbul' },
-    { name: 'Izmir' },
-    { name: 'Paris' },
-    { name: 'Rome' },
-    { name: 'Bangkok' },
-    { name: 'Dubai' },
-    { name: 'Attica (Athens and surrounding area)' },
-    { name: 'London' },
+    { name: 'Antalya', displayName: 'Antalya', backendName: 'Antalya' },
+    { name: 'New York', displayName: 'New York', backendName: 'New York' },
+    { name: 'Istanbul', displayName: 'Istanbul', backendName: 'Istanbul' },
+    { name: 'Izmir', displayName: 'Izmir', backendName: 'Izmir' },
+    { name: 'Paris', displayName: 'Paris', backendName: 'Paris' },
+    { name: 'Rome', displayName: 'Rome', backendName: 'Rome' },
+    { name: 'Bangkok', displayName: 'Bangkok', backendName: 'Bangkok' },
+    { name: 'Dubai', displayName: 'Dubai', backendName: 'Dubai' },
+    { name: 'Athens', displayName: 'Athens', backendName: 'Attica (Athens and surrounding area)' },
+    { name: 'London', displayName: 'London', backendName: 'London' },
   ];
 
   const cityImages: Record<string, string> = {
@@ -601,12 +614,12 @@ const SearchPage: React.FC = () => {
     'Rome': '/Rome.jpg',
     'Bangkok': '/Bangkok.jpg',
     'Dubai': '/Dubai.jpg',
-    'Attica (Athens and surrounding area)': '/Athens.jpg',
+    'Athens': '/Athens.jpg',
     'London': '/London.jpg',
   };
 
   // Popüler destinasyona tıklanınca önce autocomplete, sonra pricesearch
-  const handlePopularDestinationClick = async (destination: { name: string }) => {
+  const handlePopularDestinationClick = async (destination: { name: string; displayName: string; backendName: string }) => {
     try {
       const response = await fetch('http://localhost:8080/search/autocomplete', {
         method: 'POST',
@@ -614,14 +627,13 @@ const SearchPage: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
         },
-        body: JSON.stringify({ query: destination.name, productType: 2, culture: 'en-US' }),
+        body: JSON.stringify({ query: destination.backendName, productType: 2, culture: 'en-US' }),
       });
       const data = await response.json();
       const items = data.body?.items || [];
       const match = items.find((item: any) =>
         item.type === 2 && item.city?.name?.toLowerCase().includes(destination.name.toLowerCase())
       ) || items.find((item: any) => item.type === 2);
-      console.log('Otomatik seçilen şehir:', match);
       if (!match) {
         alert('Şehir bulunamadı!');
         return;
@@ -650,21 +662,7 @@ const SearchPage: React.FC = () => {
       };
 
       const token = localStorage.getItem('authToken') || '';
-      const priceRes = await fetch('http://localhost:8080/api/pricesearch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(priceSearchRequest),
-      });
-      if (!priceRes.ok) {
-        alert('Otel arama başarısız!');
-        return;
-      }
-      const priceData = await priceRes.json();
-
-      // HotelList'e yönlendir, arama parametrelerini state ile ilet
+      // HotelList'te fetch edilecek, burada fetch etme
       const searchParams = {
         destination: match.city.id,
         destinationName: match.city.name,
@@ -676,7 +674,7 @@ const SearchPage: React.FC = () => {
         currency: 'EUR',
         nationality: 'DE',
         roomDetails: [{ adults: 1, children: 0, childAges: [] }],
-        priceSearchResult: priceData.body || null,
+        // priceSearchResult: null,
       };
       localStorage.setItem('lastHotelSearchParams', JSON.stringify(searchParams));
       navigate('/hotels', { state: { searchParams } });
@@ -806,6 +804,43 @@ const SearchPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Sayfanın herhangi bir yerine tıklanınca dropdownları kapat
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Check-in calendar
+      if (
+        showCheckInCalendar &&
+        checkInRef.current &&
+        !checkInRef.current.contains(event.target as Node) &&
+        (!checkInCalendarRef.current || !checkInCalendarRef.current.contains(event.target as Node))
+      ) {
+        setShowCheckInCalendar(false);
+      }
+      // Check-out calendar
+      if (
+        showCheckOutCalendar &&
+        checkOutRef.current &&
+        !checkOutRef.current.contains(event.target as Node) &&
+        (!checkOutCalendarRef.current || !checkOutCalendarRef.current.contains(event.target as Node))
+      ) {
+        setShowCheckOutCalendar(false);
+      }
+      // Guest/Room dropdown
+      if (
+        showGuestRoomDropdown &&
+        guestRoomDropdownRef.current &&
+        !guestRoomDropdownRef.current.contains(event.target as Node) &&
+        !showChildAgeModal // child modal açıksa dropdown kapanmasın
+      ) {
+        setShowGuestRoomDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCheckInCalendar, showCheckOutCalendar, showGuestRoomDropdown, showChildAgeModal]);
+
   if (loading) {
       return (
     <div 
@@ -826,12 +861,40 @@ const SearchPage: React.FC = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(90deg, #dbeafe 0%, #2563eb 100%)',
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: 20,
+          boxShadow: '0 8px 32px #2563eb22',
+          padding: '64px 80px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 400,
+        }}>
+          <div className="loading-spinner" style={{ width: 64, height: 64, border: '6px solid #b2f2e5', borderTop: '6px solid #38b2ac', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 32 }} />
+          <div style={{ fontSize: 26, color: '#19977a', fontWeight: 700, marginTop: 12 }}>Searching for hotels...</div>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div
-        style={{
-          backgroundImage: `url(${backgroundUrl})`,
-          backgroundSize: 'cover',
+    <div
+      style={{
+        backgroundImage: `url(${backgroundUrl})`,
+        backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
           backgroundAttachment: 'fixed',
@@ -1025,411 +1088,452 @@ const SearchPage: React.FC = () => {
         <div
           style={{ position: 'relative', zIndex: 1, minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <form
-            className="searchbar-unified"
-            onSubmit={handleSearchSubmit}
-            style={{
+          {/* NİZAMİ, BİRLEŞİK, MODERN SEARCH BAR */}
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            margin: '48px 0 32px 0',
+          }}>
+            <div style={{
+              width: '100%',
+              maxWidth: 2100,
+              background: '#fff',
+              borderRadius: 44,
+              boxShadow: '0 12px 48px #11182744',
+              padding: '54px 54px 38px 54px',
               display: 'flex',
-              flexDirection: 'row',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(255,255,255,0.98)',
-              borderRadius: 32,
-              boxShadow: '0 10px 36px 0 rgba(30, 58, 138, 0.13)',
-              minHeight: 80,
-              maxWidth: 1600,
-              width: '100%',
-              padding: 0,
-              gap: 0,
-              overflow: 'visible',
-            }}
-          >
-            {/* Destination */}
-            <div style={{ flex: 2, minWidth: 320, maxWidth: 600, display: 'flex', alignItems: 'center', position: 'relative', background: 'none', borderRight: '1.5px solid #e0e7ef', height: 80 }}>
-              <span style={{ position: 'absolute', left: 22, fontSize: 26, color: '#2563eb', zIndex: 2 }}>📍</span>
-                  <input 
-                className="searchbar-input"
-                    type="text" 
-                placeholder="Destination"
-                    value={destinationQuery}
-                onChange={e => {
-                      setDestinationQuery(e.target.value);
-                      fetchAutocomplete(e.target.value);
-                    }}
+            }}>
+              {/* Card üstüne başlık */}
+              <div style={{ width: '100%', textAlign: 'center', marginBottom: 32 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#232931', letterSpacing: 0.5 }}>Where do you want to go?</span>
+              </div>
+              <form onSubmit={handleSearchSubmit} style={{
+                width: '100%',
+                background: 'transparent',
+                borderRadius: 24,
+                boxShadow: 'none',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0,
+                border: '2.5px solid #232931',
+                boxSizing: 'border-box',
+                position: 'relative',
+                zIndex: 20,
+                minHeight: 100,
+                height: 100,
+                backgroundColor: '#fff',
+                overflow: 'visible',
+              }}>
+                {/* Destination */}
+                <div style={{ flex: 2.5, minWidth: 600, maxWidth: 1400, display: 'flex', alignItems: 'center', position: 'relative', background: 'none', borderRight: '2px solid #232931', height: 100, padding: '0 40px' }}>
+                  <span style={{ position: 'absolute', left: 22, fontSize: 26, color: '#2563eb', zIndex: 2 }}>📍</span>
+                      <input 
+                    className="searchbar-input"
+                        type="text" 
+                    placeholder="Destination"
+                        value={destinationQuery}
+                    onChange={e => {
+                          setDestinationQuery(e.target.value);
+                          fetchAutocomplete(e.target.value);
+                        }}
                     onFocus={() => {
-                  if (destinationQuery.length >= 3) setShowAutocomplete(true);
+                      setShowAutocomplete(true);
                       setShowCurrencyDropdown(false);
                       setShowNationalityDropdown(false);
                     }}
-                onBlur={() => setTimeout(() => setShowAutocomplete(false), 300)}
-                style={{
-                  width: '100%',
-                  height: 80,
-                  border: 'none',
-                  outline: 'none',
-                  background: 'none',
-                  fontWeight: 700,
-                  fontSize: '1.32rem',
-                  color: '#232931',
-                  padding: '0 1.6rem 0 3.2rem',
-                  borderRadius: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              />
-              {loadingAutocomplete && <div className="autocomplete-loading">⏳</div>}
-                  {showAutocomplete && (
-                    <div className="autocomplete-dropdown">
-                      {autocompleteResults.length > 0 ? (
-                        autocompleteResults.map((item, index) => (
-                      <div key={index} className="autocomplete-item" onClick={() => {
-                            let displayText = '';
-                            let destinationId = '';
-                            let destinationType = 2;
-                            let destinationName = '';
-                            if (item.hotel) {
-                              displayText = `${item.hotel.name}, ${item.city?.name || ''}, ${item.country?.name || ''}`;
-                              destinationId = item.hotel.id;
-                              destinationType = 1; // Otel için 1
-                              destinationName = item.hotel.name;
-                            } else if (item.city) {
-                              displayText = `${item.city.name}, ${item.state?.name || ''}, ${item.country?.name || ''}`;
-                              destinationId = item.city.id;
-                              destinationType = 2; // Şehir için 2
-                              destinationName = item.city.name;
-                            } else if (item.state) {
-                              displayText = `${item.state.name}, ${item.country?.name || ''}`;
-                              destinationId = item.state.id;
-                              destinationType = 2;
-                              destinationName = item.state.name;
-                            } else if (item.country) {
-                              displayText = item.country.name;
-                              destinationId = item.country.id;
-                              destinationType = 2;
-                              destinationName = item.country.name;
-                            }
-                            setDestinationQuery(displayText);
-                        setSelectedDestination({ id: destinationId, type: destinationType, name: destinationName });
-                            setShowAutocomplete(false);
-                        if (destinationId && destinationType) fetchCheckInDates(destinationId, destinationType);
-                      }}>
-                        <div className="autocomplete-icon">{item.hotel ? '🏨' : '📍'}</div>
-                            <div className="autocomplete-content">
-                          <div className="autocomplete-title">{item.hotel ? item.hotel.name : (item.city ? item.city.name : (item.state ? item.state.name : item.country?.name))}</div>
-                          <div className="autocomplete-subtitle">{item.city && item.city.name !== (item.hotel ? item.hotel.name : item.state?.name) && `${item.city.name}, `}{item.state && item.state.name !== item.country?.name && `${item.state.name}, `}{item.country?.name}</div>
+                    onBlur={() => setTimeout(() => setShowAutocomplete(false), 300)}
+                    style={{
+                      width: '100%',
+                      height: 100,
+                      border: 'none',
+                      outline: 'none',
+                      background: 'none',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                      color: '#232931',
+                      padding: '0 2.4rem 0 3.2rem',
+                      borderRadius: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={destinationQuery}
+                  />
+                  {loadingAutocomplete && <div className="autocomplete-loading">⏳</div>}
+                      {showAutocomplete && (
+                        <div className="autocomplete-dropdown">
+                          {autocompleteResults.length > 0 ? (
+                            autocompleteResults.map((item, index) => (
+                          <div key={index} className="autocomplete-item" onClick={() => {
+                                let displayText = '';
+                                let destinationId = '';
+                                let destinationType = 2;
+                                let destinationName = '';
+                                if (item.hotel) {
+                                  displayText = `${item.hotel.name}, ${item.city?.name || ''}, ${item.country?.name || ''}`;
+                                  destinationId = item.hotel.id;
+                                  destinationType = 1; // Otel için 1
+                                  destinationName = item.hotel.name;
+                                } else if (item.city) {
+                                  displayText = `${item.city.name}, ${item.state?.name || ''}, ${item.country?.name || ''}`;
+                                  destinationId = item.city.id;
+                                  destinationType = 2; // Şehir için 2
+                                  destinationName = item.city.name;
+                                } else if (item.state) {
+                                  displayText = `${item.state.name}, ${item.country?.name || ''}`;
+                                  destinationId = item.state.id;
+                                  destinationType = 2;
+                                  destinationName = item.state.name;
+                                } else if (item.country) {
+                                  displayText = item.country.name;
+                                  destinationId = item.country.id;
+                                  destinationType = 2;
+                                  destinationName = item.country.name;
+                                }
+                                setDestinationQuery(displayText);
+                            setSelectedDestination({ id: destinationId, type: destinationType, name: destinationName });
+                                setShowAutocomplete(false);
+                            if (destinationId && destinationType) fetchCheckInDates(destinationId, destinationType);
+                          }}>
+                            <div className="autocomplete-icon">{item.hotel ? '🏨' : '📍'}</div>
+                                <div className="autocomplete-content">
+                              <div className="autocomplete-title">{item.hotel ? item.hotel.name : (item.city ? item.city.name : (item.state ? item.state.name : item.country?.name))}</div>
+                              <div className="autocomplete-subtitle">{item.city && item.city.name !== (item.hotel ? item.hotel.name : item.state?.name) && `${item.city.name}, `}{item.state && item.state.name !== item.country?.name && `${item.state.name}, `}{item.country?.name}</div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="autocomplete-no-results">
+                              <div className="no-results-icon">🔍</div>
+                              <div className="no-results-text">No results found</div>
                             </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="autocomplete-no-results">
-                          <div className="no-results-icon">🔍</div>
-                          <div className="no-results-text">No results found</div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-            {/* Check-in */}
-            <div style={{ flex: 1, minWidth: 220, maxWidth: 400, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, overflow: 'visible', position: 'relative' }}>
-                      <input 
-                ref={checkInRef}
-                className="searchbar-input"
-                        type="text"
-                placeholder="Check-in"
-                value={selectedCheckInDate ? new Date(selectedCheckInDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
-                        readOnly
-                        disabled={!selectedDestination || loadingCheckIn}
-                        onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
-                style={{
-                  width: '100%',
-                  height: 80,
-                  border: 'none',
-                  outline: 'none',
-                  background: 'none',
-                  fontWeight: 700,
-                  fontSize: '1.32rem',
-                  color: '#232931',
-                  padding: '0 1.6rem',
-                  borderRadius: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              />
-              {showCheckInCalendar && createPortal(
-                <div className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkInCalendarPos.top, left: checkInCalendarPos.left, width: checkInCalendarPos.width, background: '#fff' }}>
-                        <div className="calendar-header">
-                          <button 
-                            type="button" 
-                            className="calendar-nav-btn"
-                            onClick={() => navigateMonth('prev')}
-                          >
-                            ▲
-                          </button>
-                          <div className="calendar-title">
-                            {currentMonth.toLocaleDateString('en-US', { 
-                              month: 'long', 
-                              year: 'numeric' 
-                            })}
-                          </div>
-                          <button 
-                            type="button" 
-                            className="calendar-nav-btn"
-                            onClick={() => navigateMonth('next')}
-                          >
-                            ▼
-                          </button>
-                        </div>
-                        
-                        <div className="calendar-weekdays">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                            <div key={day} className="calendar-weekday">{day}</div>
-                          ))}
-                        </div>
-                        
-                        <div className="calendar-grid">
-                          {generateCalendarDays().map(({ date, isCurrentMonth }, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className={`calendar-day ${
-                                !isCurrentMonth ? 'other-month' : ''
-                              } ${
-                                isDateAvailable(date) ? 'available' : 'unavailable'
-                              } ${
-                                isSelectedDate(date) ? 'selected' : ''
-                              } ${
-                                isToday(date) ? 'today' : ''
-                              }`}
-                              disabled={!isDateAvailable(date)}
-                              onClick={() => selectDate(date)}
-                            >
-                              {date.getDate()}
-                            </button>
-                          ))}
-                        </div>
-                        
-                        <div className="calendar-footer">
-                          <button 
-                            type="button" 
-                            className="calendar-footer-btn"
-                            onClick={clearSelection}
-                          >
-                            Clear
-                          </button>
-                          <button 
-                            type="button" 
-                            className="calendar-footer-btn"
-                            onClick={goToToday}
-                          >
-                            Today
-                          </button>
-                        </div>
-                  </div>,
-                  document.body
-                )}
-                  </div>
-            {/* Check-out */}
-            <div style={{ flex: 1, minWidth: 220, maxWidth: 400, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, overflow: 'visible', position: 'relative' }}>
-                      <input
-                ref={checkOutRef}
-                className="searchbar-input"
-                        type="text"
-                placeholder="Check-out"
-                value={selectedCheckOutDate ? new Date(selectedCheckOutDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
-                        readOnly
-                        disabled={!selectedCheckInDate}
-                        onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
-                style={{
-                  width: '100%',
-                  height: 80,
-                  border: 'none',
-                  outline: 'none',
-                  background: 'none',
-                  fontWeight: 700,
-                  fontSize: '1.32rem',
-                  color: '#232931',
-                  padding: '0 1.6rem',
-                  borderRadius: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              />
-              {showCheckOutCalendar && createPortal(
-                <div className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkOutCalendarPos.top, left: checkOutCalendarPos.left, width: checkOutCalendarPos.width, background: '#fff' }}>
-                        <div className="calendar-header">
-                          <button
-                            type="button"
-                            className="calendar-nav-btn"
-                            onClick={() => navigateCheckOutMonth('prev')}
-                          >
-                            ▲
-                          </button>
-                          <div className="calendar-title">
-                            {currentCheckOutMonth.toLocaleDateString('en-US', {
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </div>
-                          <button
-                            type="button"
-                            className="calendar-nav-btn"
-                            onClick={() => navigateCheckOutMonth('next')}
-                          >
-                            ▼
-                          </button>
-                        </div>
-                        <div className="calendar-weekdays">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                            <div key={day} className="calendar-weekday">{day}</div>
-                          ))}
-                        </div>
-                        <div className="calendar-grid">
-                          {generateCheckOutCalendarDays().map(({ date, isCurrentMonth }, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className={`calendar-day ${
-                                !isCurrentMonth ? 'other-month' : ''
-                              } ${
-                                isCheckOutDateAvailable(date) ? 'available' : 'unavailable'
-                              } ${
-                                isSelectedCheckOutDate(date) ? 'selected' : ''
-                              } ${
-                                isToday(date) ? 'today' : ''
-                              }`}
-                              disabled={!isCheckOutDateAvailable(date)}
-                              onClick={() => selectCheckOutDate(date)}
-                            >
-                              {date.getDate()}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="calendar-footer">
-                          <button
-                            type="button"
-                            className="calendar-footer-btn"
-                            onClick={clearCheckOutSelection}
-                          >
-                            Clear
-                          </button>
-                          <button
-                            type="button"
-                            className="calendar-footer-btn"
-                            onClick={goToCheckOutToday}
-                          >
-                            Today
-                          </button>
-                        </div>
-                  </div>,
-                  document.body
-                    )}
-                  </div>
-            {/* Guests (summary, açılır modal) */}
-            <div style={{ flex: 1.2, minWidth: 220, maxWidth: 340, display: 'flex', alignItems: 'center', borderRight: '1.5px solid #e0e7ef', height: 80, position: 'relative' }}>
-              <button type="button" className="searchbar-input" style={{
-                width: '100%',
-                height: 80,
-                border: 'none',
-                outline: 'none',
-                background: 'none',
-                fontWeight: 700,
-                fontSize: '1.32rem',
-                color: '#232931',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderRadius: 0,
-                padding: '0 1.6rem',
-              }} onClick={() => setShowGuestsDropdown(true)}>
-                <span>{getTotalGuests()} Guest{getTotalGuests() > 1 ? 's' : ''}, {rooms.length} Room{rooms.length > 1 ? 's' : ''}</span>
-                <span style={{ fontSize: 26, color: '#2563eb', marginLeft: 10 }}>▼</span>
+                {/* Check-in */}
+                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: 80, borderRight: '2px solid #232931', padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 22, fontSize: 22, color: '#2563eb', zIndex: 2 }}>🗓️</span>
+                          <input 
+                    ref={checkInRef}
+                    className="searchbar-input"
+                            type="text"
+                    placeholder="Check-in"
+                    value={selectedCheckInDate ? new Date(selectedCheckInDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                            readOnly
+                            disabled={!selectedDestination || loadingCheckIn}
+                            onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
+                    style={{
+                      width: '100%',
+                      height: 80,
+                      border: 'none',
+                      outline: 'none',
+                      background: 'none',
+                      fontWeight: 700,
+                      fontSize: '1.32rem',
+                      color: '#232931',
+                      padding: '0 1.6rem 0 2.8rem',
+                      borderRadius: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  />
+                  {showCheckInCalendar && createPortal(
+                    <div ref={checkInCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkInCalendarPos.top, left: checkInCalendarPos.left, width: checkInCalendarPos.width, background: '#fff' }}>
+                            <div className="calendar-header">
+                              <button 
+                                type="button" 
+                                className="calendar-nav-btn"
+                                onClick={() => navigateMonth('prev')}
+                              >
+                                ▲
                               </button>
-              {showGuestsDropdown && (
-                <div style={{ position: 'absolute', top: 76, left: 0, zIndex: 100, background: '#fff', border: '1.5px solid #e0e7ef', borderRadius: 12, boxShadow: '0 8px 32px #2563eb22', padding: 18, minWidth: 260 }}>
-                  {rooms.map((room, index) => (
-                    <div key={room.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
-                      <span style={{ fontWeight: 700,  whiteSpace: 'nowrap' }}>Room {index + 1}:</span>
-                      <span>Adults</span>
-                      <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)} disabled={room.adults <= 1} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700, marginLeft: 2 }}>-</button>
-                      <span style={{ fontWeight: 700 }}>{room.adults}</span>
-                      <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults + 1)} disabled={room.adults >= MAX_ADULTS} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700 }}>+</button>
-                      <span>Children</span>
-                      <button type="button" onClick={() => updateRoomGuests(room.id, 'children', room.children - 1)} disabled={room.children <= 0} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700, marginLeft: 2 }}>-</button>
-                      <span style={{ fontWeight: 700 }}>{room.children}</span>
-                      <button type="button" onClick={() => openChildAgeModal(room.id, room.children + 1, room.childAges)} disabled={room.children >= MAX_CHILDREN} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700 }}>+</button>
-                      {/* Remove Room butonu, ilk oda hariç */}
-                      {rooms.length > 1 && index > 0 && (
-                        <button type="button" onClick={() => removeRoom(room.id)} style={{ marginLeft: 8, background: '#ff5252', color: '#fff', border: 'none', borderRadius: 8, width: 28, height: 28, fontWeight: 900, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-                            )}
-                          </div>
-                  ))}
-                  <button type="button" onClick={addRoom} disabled={rooms.length >= MAX_ROOMS} style={{ marginTop: 8, fontWeight: 700, color: '#2563eb', background: '#e0e7ef', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 15, cursor: rooms.length >= MAX_ROOMS ? 'not-allowed' : 'pointer', opacity: rooms.length >= MAX_ROOMS ? 0.5 : 1 }}>+ Add Room</button>
-                  <div style={{ marginTop: 12, fontWeight: 900, color: '#334155', background: '#f1f5f9', borderRadius: 10, padding: '10px 18px', fontSize: 16, boxShadow: '0 1px 4px #2563eb0a' }}>
-                    Total: {getTotalGuests()} Guests, {rooms.length} Room{rooms.length > 1 ? 's' : ''}
-                        </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-                    <button type="button" onClick={() => setShowGuestsDropdown(false)} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 32px', fontWeight: 800, fontSize: 18, cursor: 'pointer' }}>Done</button>
-                          </div>
-                        </div>
-              )}
-                          </div>
-            {/* Search Button */}
-            <div style={{
-              flex: 0.9,
-              minWidth: 220,
-              maxWidth: 260,
-              display: 'flex',
-              alignItems: 'stretch', // stretch ile tam hizalama
-              justifyContent: 'center',
-              height: 80,
-              minHeight: 80,
-              maxHeight: 80,
-              background: '#fff',
-              borderRadius: 0,
-              borderTopRightRadius: 32,
-              borderBottomRightRadius: 32,
-              boxShadow: 'none',
-              margin: 0,
-              padding: 0
-            }}>
-                                    <button 
-                type="submit"
-                className="search-btn-v2"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  minHeight: 80,
-                  maxHeight: 80,
-                  fontSize: '1.32rem',
-                  borderRadius: 0,
-                  borderTopRightRadius: 32,
-                  borderBottomRightRadius: 32,
-                  background: 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
-                  color: '#fff',
-                  fontWeight: 900,
-                  boxShadow: 'none',
-                  border: 'none',
-                  margin: 0,
-                  padding: 0,
-                  letterSpacing: 1,
-                  display: 'block',
-                  lineHeight: '80px', // tam ortalama
-                  verticalAlign: 'middle',
-                  textAlign: 'center',
-                }}
-              >
-                Search Hotels
-                                    </button>
-                                  </div>
-          </form>
-                                </div>
+                              <div className="calendar-title">
+                                {currentMonth.toLocaleDateString('en-US', { 
+                                  month: 'long', 
+                                  year: 'numeric' 
+                                })}
+                              </div>
+                              <button 
+                                type="button" 
+                                className="calendar-nav-btn"
+                                onClick={() => navigateMonth('next')}
+                              >
+                                ▼
+                              </button>
                             </div>
-      {/* Çocuk yaş modalı */}
-      {showChildAgeModal && (
-        <div className="child-age-modal-overlay" style={{ position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="child-age-modal" style={{ background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', padding: 32, minWidth: 320, maxWidth: 400 }}>
+                            
+                            <div className="calendar-weekdays">
+                              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                <div key={day} className="calendar-weekday">{day}</div>
+                              ))}
+                            </div>
+                            
+                            <div className="calendar-grid">
+                              {generateCalendarDays().map(({ date, isCurrentMonth }, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className={`calendar-day ${
+                                    !isCurrentMonth ? 'other-month' : ''
+                                  } ${
+                                    isDateAvailable(date) ? 'available' : 'unavailable'
+                                  } ${
+                                    isSelectedDate(date) ? 'selected' : ''
+                                  } ${
+                                    isToday(date) ? 'today' : ''
+                                  }`}
+                                  disabled={!isDateAvailable(date)}
+                                  onClick={() => selectDate(date)}
+                                >
+                                  {date.getDate()}
+                                </button>
+                              ))}
+                            </div>
+                            
+                            <div className="calendar-footer">
+                              <button 
+                                type="button" 
+                                className="calendar-footer-btn"
+                                onClick={clearSelection}
+                              >
+                                Clear
+                              </button>
+                              <button 
+                                type="button" 
+                                className="calendar-footer-btn"
+                                onClick={goToToday}
+                              >
+                                Today
+                              </button>
+                            </div>
+                      </div>,
+                      document.body
+                    )}
+                    </div>
+                {/* Check-out */}
+                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: 80, borderRight: '2px solid #232931', padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 22, fontSize: 22, color: '#2563eb', zIndex: 2 }}>🗓️</span>
+                          <input
+                    ref={checkOutRef}
+                    className="searchbar-input"
+                            type="text"
+                    placeholder="Check-out"
+                    value={selectedCheckOutDate ? new Date(selectedCheckOutDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                            readOnly
+                            disabled={!selectedCheckInDate}
+                            onClick={() => setShowCheckOutCalendar(!showCheckOutCalendar)}
+                    style={{
+                      width: '100%',
+                      height: 80,
+                      border: 'none',
+                      outline: 'none',
+                      background: 'none',
+                      fontWeight: 700,
+                      fontSize: '1.32rem',
+                      color: '#232931',
+                      padding: '0 1.6rem 0 2.8rem',
+                      borderRadius: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  />
+                  {showCheckOutCalendar && createPortal(
+                    <div ref={checkOutCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkOutCalendarPos.top, left: checkOutCalendarPos.left, width: checkOutCalendarPos.width, background: '#fff' }}>
+                            <div className="calendar-header">
+                              <button
+                                type="button"
+                                className="calendar-nav-btn"
+                                onClick={() => navigateCheckOutMonth('prev')}
+                              >
+                                ▲
+                              </button>
+                              <div className="calendar-title">
+                                {currentCheckOutMonth.toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </div>
+                              <button
+                                type="button"
+                                className="calendar-nav-btn"
+                                onClick={() => navigateCheckOutMonth('next')}
+                              >
+                                ▼
+                              </button>
+                            </div>
+                            <div className="calendar-weekdays">
+                              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                <div key={day} className="calendar-weekday">{day}</div>
+                              ))}
+                            </div>
+                            <div className="calendar-grid">
+                              {generateCheckOutCalendarDays().map(({ date, isCurrentMonth }, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className={`calendar-day ${
+                                    !isCurrentMonth ? 'other-month' : ''
+                                  } ${
+                                    isCheckOutDateAvailable(date) ? 'available' : 'unavailable'
+                                  } ${
+                                    isSelectedCheckOutDate(date) ? 'selected' : ''
+                                  } ${
+                                    isToday(date) ? 'today' : ''
+                                  }`}
+                                  disabled={!isCheckOutDateAvailable(date)}
+                                  onClick={() => selectCheckOutDate(date)}
+                                >
+                                  {date.getDate()}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="calendar-footer">
+                              <button
+                                type="button"
+                                className="calendar-footer-btn"
+                                onClick={clearCheckOutSelection}
+                              >
+                                Clear
+                              </button>
+                              <button
+                                type="button"
+                                className="calendar-footer-btn"
+                                onClick={goToCheckOutToday}
+                              >
+                                Today
+                              </button>
+                            </div>
+                      </div>,
+                      document.body
+                        )}
+                      </div>
+                {/* Guests & Rooms */}
+                <div style={{ flex: 1.1, minWidth: 320, display: 'flex', alignItems: 'center', height: 100, padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 22, fontSize: 22, color: '#2563eb', zIndex: 2 }}>👤</span>
+                  <button type="button" className="searchbar-input" style={{
+                    width: '100%',
+                    height: 80,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    outline: 'none',
+                    background: 'none',
+                    fontWeight: 700,
+                    fontSize: '1.32rem',
+                    color: '#232931',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    borderRadius: 0,
+                    padding: 0,
+                    lineHeight: 1,
+                    paddingLeft: 38,
+                  }} onClick={() => setShowGuestRoomDropdown(true)}>
+                    <span>{getTotalGuests()} Guest{getTotalGuests() > 1 ? 's' : ''}, {rooms.length} Room{rooms.length > 1 ? 's' : ''}</span>
+                    <span style={{ fontSize: 26, color: '#2563eb', marginLeft: 10 }}>▼</span>
+                  </button>
+                  {showGuestRoomDropdown && (
+                    <div ref={guestRoomDropdownRef} style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: '100%',
+                      zIndex: 100,
+                      background: '#fff',
+                      border: '1.5px solid #232931',
+                      borderRadius: 12,
+                      boxShadow: '0 8px 32px #2563eb22',
+                      padding: 18,
+                      minWidth: 320,
+                      marginTop: 8,
+                    }}>
+                      {rooms.map((room, index) => (
+                        <div key={room.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
+                          <span style={{ fontWeight: 700,  whiteSpace: 'nowrap' }}>Room {index + 1}:</span>
+                          <span>Adults</span>
+                          <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults - 1)} disabled={room.adults <= 1} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700, marginLeft: 2 }}>-</button>
+                          <span style={{ fontWeight: 700 }}>{room.adults}</span>
+                          <button type="button" onClick={() => updateRoomGuests(room.id, 'adults', room.adults + 1)} disabled={room.adults >= MAX_ADULTS} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#2563eb', fontWeight: 700 }}>+</button>
+                          <span>Children</span>
+                          <button type="button" onClick={() => updateRoomGuests(room.id, 'children', room.children - 1)} disabled={room.children <= 0} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700, marginLeft: 2 }}>-</button>
+                          <span style={{ fontWeight: 700 }}>{room.children}</span>
+                          <button type="button" onClick={() => openChildAgeModal(room.id, room.children + 1, room.childAges)} disabled={room.children >= MAX_CHILDREN} style={{ fontSize: 18, width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e0e7ef', background: '#fff', color: '#f59e42', fontWeight: 700 }}>+</button>
+                          {/* Remove Room butonu, ilk oda hariç */}
+                          {rooms.length > 1 && index > 0 && (
+                            <button type="button" onClick={() => removeRoom(room.id)} style={{ marginLeft: 8, background: '#ff5252', color: '#fff', border: 'none', borderRadius: 8, width: 28, height: 28, fontWeight: 900, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                                )}
+                              </div>
+                      ))}
+                      <button type="button" onClick={addRoom} disabled={rooms.length >= MAX_ROOMS} style={{ marginTop: 8, fontWeight: 700, color: '#2563eb', background: '#e0e7ef', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 15, cursor: rooms.length >= MAX_ROOMS ? 'not-allowed' : 'pointer', opacity: rooms.length >= MAX_ROOMS ? 0.5 : 1 }}>+ Add Room</button>
+                      <div style={{ marginTop: 12, fontWeight: 900, color: '#334155', background: '#f1f5f9', borderRadius: 10, padding: '10px 18px', fontSize: 16, boxShadow: '0 1px 4px #2563eb0a' }}>
+                        Total: {getTotalGuests()} Guests, {rooms.length} Room{rooms.length > 1 ? 's' : ''}
+                            </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+                        <button type="button" onClick={() => setShowGuestRoomDropdown(false)} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 32px', fontWeight: 800, fontSize: 18, cursor: 'pointer' }}>Done</button>
+                              </div>
+                            </div>
+                    )}
+                            </div>
+                {/* Search butonunu en sağa ekle */}
+                <button
+                  type="button"
+                  className="search-btn-v2"
+                  style={{
+                    height: 100,
+                    padding: '0 38px',
+                    fontSize: '1.45rem',
+                    fontWeight: 900,
+                    borderRadius: '0 18px 18px 0',
+                    background: 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    boxShadow: '0 4px 24px #2563eb22',
+                    letterSpacing: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    marginTop: 0,
+                    marginLeft: 0,
+                  }}
+                  onClick={(e) => {
+                    // Form submitini tetikle
+                    const form = document.querySelector('form');
+                    if (form) {
+                      const event = new Event('submit', { bubbles: true, cancelable: true });
+                      form.dispatchEvent(event);
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: 24, marginRight: 10, display: 'flex', alignItems: 'center' }}>🔍</span>
+                  Search
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {/* Çocuk yaş modalı */}
+        {showChildAgeModal && typeof window !== 'undefined' && createPortal(
+          <div style={{
+            position: 'absolute',
+            left: childModalPos.left,
+            top: childModalPos.top,
+            zIndex: 2000,
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            padding: 32,
+            minWidth: 320,
+            maxWidth: 400,
+            marginTop: 12,
+          }}>
             <h3 style={{ color: '#ff9800', fontWeight: 600, fontSize: 20, marginBottom: 18, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif` }}>Enter Child Ages</h3>
             {pendingChildAges.map((age, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, background: '#fff8e1', borderRadius: 8, padding: 12 }}>
@@ -1438,14 +1542,14 @@ const SearchPage: React.FC = () => {
                   <button type="button" style={{ background: '#ff5252', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age - 1)} disabled={age <= 0}>-</button>
                   <span style={{ fontWeight: 600, fontSize: 18, color: '#e65100', minWidth: 24, textAlign: 'center' }}>{age}</span>
                   <button type="button" style={{ background: '#4caf50', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, fontSize: 18, fontWeight: 700, cursor: 'pointer' }} onClick={() => updatePendingChildAge(idx, age + 1)} disabled={age >= 17}>+</button>
-                          </div>
-                      </div>
-                    ))}
+                </div>
+              </div>
+            ))}
             {/* Add Child butonu */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
-                  <button 
-                    type="button" 
-                          style={{
+              <button 
+                type="button" 
+                style={{
                   background: '#4caf50',
                   color: '#fff',
                   border: 'none',
@@ -1465,211 +1569,234 @@ const SearchPage: React.FC = () => {
                 {FaPlus({})}
               </button>
               <span style={{ fontWeight: 500, color: '#4caf50', fontSize: 16 }}>Add Child</span>
-                          </div>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 18 }}>
               <button type="button" style={{ background: '#ececec', color: '#232931', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 500, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={() => setShowChildAgeModal(false)}>Cancel</button>
               <button type="button" style={{ background: '#ff9800', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, fontFamily: `'Inter', 'Roboto', 'Segoe UI', 'Arial', sans-serif`, cursor: 'pointer' }} onClick={saveChildAges}>Save</button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-      {/* Search bar ve footer arasına popüler destinasyonlar bölümü ekle */}
-      <div style={{
+            </div>
+          </div>,
+          document.body
+        )}
+        {/* Search bar ve footer arasına popüler destinasyonlar bölümü ekle */}
+        <div style={{
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  margin: '48px 0',
-  background: 'linear-gradient(90deg, #bbdefb 0%, #2563eb 100%)',
-  padding: '48px 0 56px 0',
-  borderRadius: 32,
-  boxShadow: '0 8px 32px #2563eb22',
+  margin: '0 0 32px 0',
+  background: 'transparent',
+  padding: '32px 0 48px 0',
+  borderRadius: 0,
+  boxShadow: 'none',
 }}>
-  <h2 style={{ fontSize: 32, fontWeight: 900, marginBottom: 36, color: '#232931', letterSpacing: 1, textShadow: '0 2px 8px #fff8' }}>Popular Destinations</h2>
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center', justifyContent: 'center' }}>
     {/* İlk 5 şehir: Daireler */}
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-end', marginBottom: 0 }}>
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 72, justifyContent: 'center', alignItems: 'flex-end', marginBottom: 0 }}>
       {popularDestinations.slice(0, 5).map((dest) => {
         const imgSrc = cityImages[dest.name] || '';
         return (
-          <div key={dest.name} style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button
-              onClick={() => handlePopularDestinationClick(dest)}
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: '50%',
-                border: 'none',
-                background: 'linear-gradient(135deg, #e0e7ef 0%, #bbdefb 100%)',
-                boxShadow: '0 4px 24px #2563eb22',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                fontSize: 36,
-                fontWeight: 800,
-                color: '#232931',
-                outline: 'none',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.transform = 'scale(1.08)';
-                e.currentTarget.style.boxShadow = '0 8px 32px #2563eb44';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 24px #2563eb22';
-              }}
-            >
-              {imgSrc ? (
-                <img src={imgSrc} alt={dest.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ fontSize: 38, fontWeight: 900, color: '#232931', userSelect: 'none' }}>{dest.name[0]}</span>
-              )}
-            </button>
+          <div
+            key={dest.name}
+            style={{
+              width: 220,
+              height: 220,
+              background: '#fff',
+              borderRadius: 24,
+              boxShadow: '0 4px 24px #2563eb22',
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transition: 'transform 0.18s, box-shadow 0.18s',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+            onMouseOver={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.04)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px #2563eb44';
+            }}
+            onMouseOut={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px #2563eb22';
+            }}
+            onClick={() => handlePopularDestinationClick(dest)}
+          >
+            {/* Tüm kutucuğu kaplayan img */}
+            {imgSrc && (
+              <img
+                src={imgSrc}
+                alt={dest.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: 24,
+                  display: 'block',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 1,
+                }}
+              />
+            )}
+            {/* Şehir adı overlay */}
+            <span style={{
+              fontWeight: 800,
+              fontSize: '1.3rem',
+              color: '#fff',
+              letterSpacing: 0.5,
+              width: '100%',
+              textAlign: 'center',
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              zIndex: 2,
+              padding: '18px 12px 18px 12px',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.65) 70%, rgba(0,0,0,0.15) 100%, rgba(0,0,0,0.0) 100%)',
+              borderBottomLeftRadius: 24,
+              borderBottomRightRadius: 24,
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 48,
+            }}>{dest.displayName}</span>
           </div>
         );
       })}
     </div>
-    {/* İlk 5 şehir: İsimler */}
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-start' }}>
-      {popularDestinations.slice(0, 5).map((dest) => (
-        <div key={dest.name} style={{ minWidth: 120, textAlign: 'center' }}>
-          <span style={{
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            color: '#232931',
-            letterSpacing: 0.5,
-            maxWidth: 120,
-            lineHeight: 1.2,
-            wordBreak: 'break-word',
-            whiteSpace: 'normal',
-            overflow: 'hidden',
-            display: 'block',
-          }}>{dest.name}</span>
-        </div>
-      ))}
-    </div>
     {/* Sonraki 5 şehir: Daireler */}
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-end', marginTop: 24, marginBottom: 0 }}>
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 72, justifyContent: 'center', alignItems: 'flex-end', marginTop: 32, marginBottom: 0 }}>
       {popularDestinations.slice(5, 10).map((dest) => {
         const imgSrc = cityImages[dest.name] || '';
         return (
-          <div key={dest.name} style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button
-              onClick={() => handlePopularDestinationClick(dest)}
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: '50%',
-                border: 'none',
-                background: 'linear-gradient(135deg, #e0e7ef 0%, #bbdefb 100%)',
-                boxShadow: '0 4px 24px #2563eb22',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                fontSize: 36,
-                fontWeight: 800,
-                color: '#232931',
-                outline: 'none',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.transform = 'scale(1.08)';
-                e.currentTarget.style.boxShadow = '0 8px 32px #2563eb44';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 24px #2563eb22';
-              }}
-            >
-              {imgSrc ? (
-                <img src={imgSrc} alt={dest.name} style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ fontSize: 38, fontWeight: 900, color: '#232931', userSelect: 'none' }}>{dest.name[0]}</span>
-              )}
-            </button>
+          <div
+            key={dest.name}
+            style={{
+              width: 220,
+              height: 220,
+              background: '#fff',
+              borderRadius: 24,
+              boxShadow: '0 4px 24px #2563eb22',
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transition: 'transform 0.18s, box-shadow 0.18s',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+            onMouseOver={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.04)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px #2563eb44';
+            }}
+            onMouseOut={e => {
+              (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px #2563eb22';
+            }}
+            onClick={() => handlePopularDestinationClick(dest)}
+          >
+            {/* Tüm kutucuğu kaplayan img */}
+            {imgSrc && (
+              <img
+                src={imgSrc}
+                alt={dest.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: 24,
+                  display: 'block',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  zIndex: 1,
+                }}
+              />
+            )}
+            {/* Şehir adı overlay */}
+            <span style={{
+              fontWeight: 800,
+              fontSize: '1.3rem',
+              color: '#fff',
+              letterSpacing: 0.5,
+              width: '100%',
+              textAlign: 'center',
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              zIndex: 2,
+              padding: '18px 12px 18px 12px',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.65) 70%, rgba(0,0,0,0.15) 100%, rgba(0,0,0,0.0) 100%)',
+              borderBottomLeftRadius: 24,
+              borderBottomRightRadius: 24,
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 48,
+            }}>{dest.displayName}</span>
           </div>
         );
       })}
     </div>
-    {/* Sonraki 5 şehir: İsimler */}
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 48, justifyContent: 'center', alignItems: 'flex-start' }}>
-      {popularDestinations.slice(5, 10).map((dest) => (
-        <div key={dest.name} style={{ minWidth: 120, textAlign: 'center' }}>
-          <span style={{
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            color: '#232931',
-            letterSpacing: 0.5,
-            maxWidth: 120,
-            lineHeight: 1.2,
-            wordBreak: 'break-word',
-            whiteSpace: 'normal',
-            overflow: 'hidden',
-            display: 'block',
-          }}>{dest.name}</span>
-        </div>
-      ))}
-    </div>
   </div>
 </div>
-      <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
-        <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
-          <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <p style={{ fontSize: '1.08rem', fontWeight: 400, color: '#e0e0e0', marginBottom: '1.1rem', lineHeight: 1.5, textAlign: 'left' }}>
-              Your trusted partner for the best hotel experience
-            </p>
-            <div className="social-links" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-start' }}>
-              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Facebook</a>
-              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Instagram</a>
-              <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Twitter</a>
-                          </div>
-                    </div>
-          <div className="footer-section">
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Quick Access</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
-              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Home Page</a></li>
-              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Search Hotels</a></li>
-              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My Reservations</a></li>
-              <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My favorites</a></li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Contact</h4>
-            <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
-              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>info@hotelres.com</li>
-              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>+90 212 555 0123</li>
-              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>Antalya, Turkey</li>
-              <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>7/24 Support</li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Payment Methods</h4>
-            <div className="payment-methods" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Visa</span>
-              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>MasterCard</span>
-              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>PayPal</span>
-              <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Bank Transfer</span>
+        <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
+          <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+            <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <p style={{ fontSize: '1.08rem', fontWeight: 400, color: '#e0e0e0', marginBottom: '1.1rem', lineHeight: 1.5, textAlign: 'left' }}>
+                Your trusted partner for the best hotel experience
+              </p>
+              <div className="social-links" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-start' }}>
+                <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Facebook</a>
+                <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Instagram</a>
+                <a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Twitter</a>
+                            </div>
+                      </div>
+            <div className="footer-section">
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Quick Access</h4>
+              <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
+                <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Home Page</a></li>
+                <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>Search Hotels</a></li>
+                <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My Reservations</a></li>
+                <li style={{ marginBottom: '0.3rem' }}><a href="#" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, textDecoration: 'none' }}>My favorites</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Contact</h4>
+              <ul className="footer-links" style={{ listStyle: 'none', padding: 0, margin: 0, gap: '0.5rem' }}>
+                <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>info@hotelres.com</li>
+                <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>+90 212 555 0123</li>
+                <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>Antalya, Turkey</li>
+                <li style={{ marginBottom: '0.3rem', color: '#e0e0e0' }}>7/24 Support</li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#e0e0e0', marginBottom: '0.7rem', background: 'none' }}>Payment Methods</h4>
+              <div className="payment-methods" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Visa</span>
+                <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>MasterCard</span>
+                <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>PayPal</span>
+                <span className="payment-method" style={{ color: '#e0e0e0', fontSize: '1rem', fontWeight: 400, background: 'none', padding: '0.2rem 0.7rem' }}>Bank Transfer</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="footer-bottom" style={{ padding: '0.7rem 1rem 0 1rem', fontSize: '0.95rem', color: '#b0b0b0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span>© 2025 HotelRes. All rights reserved.</span>
-          <div className="footer-bottom-links" style={{ display: 'flex', gap: '1rem' }}>
-            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Privacy Policy</a>
-            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Terms of Use</a>
-            <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Cookie Policy</a>
+          <div className="footer-bottom" style={{ padding: '0.7rem 1rem 0 1rem', fontSize: '0.95rem', color: '#b0b0b0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span>© 2025 HotelRes. All rights reserved.</span>
+            <div className="footer-bottom-links" style={{ display: 'flex', gap: '1rem' }}>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Privacy Policy</a>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Terms of Use</a>
+              <a href="#" style={{ color: '#b0b0b0', fontSize: '0.95rem', padding: '0.2rem 0.7rem', textDecoration: 'none' }}>Cookie Policy</a>
+            </div>
           </div>
-        </div>
-      </footer>
-    </>
-  );
-};
+        </footer>
+      </div>
+    );
+  }
 
 export default SearchPage;
+
+export {};

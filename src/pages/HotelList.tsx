@@ -66,6 +66,10 @@ interface HotelListProps {
     currency: string;
     nationality: string;
     roomDetails?: RoomDetail[];
+    priceSearchResult?: {
+      hotels: Hotel[];
+      searchId: string;
+    };
   };
 }
 
@@ -146,7 +150,13 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       setRooms(searchParams.roomDetails || [{ adults: searchParams.guests, children: 0, childAges: [] }]);
       // Check-in endpointini çağır
       fetchCheckInDates(searchParams.destination, 2);
-      fetchHotels();
+      if (searchParams.priceSearchResult) {
+        // Eğer arama sonucu state ile geldiyse, doğrudan kullan
+        setHotels(searchParams.priceSearchResult.hotels || []);
+        setLoading(false);
+      } else {
+        fetchHotels();
+      }
     } else {
       // If no search params, redirect to home
       navigate('/', { replace: true });
