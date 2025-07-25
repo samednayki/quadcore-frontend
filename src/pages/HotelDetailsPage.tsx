@@ -3,6 +3,8 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
 import { FaSnowflake, FaUtensils, FaCar, FaGlassCheers, FaConciergeBell, FaExchangeAlt, FaHotel, FaLock, FaCouch, FaMapMarkerAlt, FaClock, FaCheckCircle, FaWifi, FaSwimmingPool, FaUmbrellaBeach, FaRegDotCircle } from 'react-icons/fa';
 import { getOffers, beginTransaction } from '../api';
+import Header from '../components/Header';
+import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 const starSvg = (fill: string) => (
   <svg width="22" height="22" viewBox="0 0 24 24" style={{ verticalAlign: 'middle', display: 'block' }}>
@@ -63,7 +65,8 @@ const HotelDetailsPage: React.FC = () => {
   const params = new URLSearchParams(search);
   const searchId = params.get('searchId') || '';
   const offerId = params.get('offerId') || '';
-  const currency = params.get('currency') || 'EUR';
+  const location = useLocation();
+  const { currency, currencyList, nationality, nationalityList } = useCurrencyNationality();
   const productType = Number(params.get('productType')) || 2;
   const productId = params.get('productId') || id || '';
   const [loading, setLoading] = useState(true);
@@ -576,62 +579,13 @@ const HotelDetailsPage: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#fff' }}>
       {/* HEADER (same as HotelList/SearchPage) */}
-      <header style={{
-        width: '100%',
-        background: '#1e3a8a',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        padding: '24px 0 12px 0',
-        marginBottom: 0,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <img
-              src={logoUrl}
-              alt="Logo"
-              style={{ height: 48, borderRadius: 12, marginRight: 16 }}
-            />
-            <span style={{ fontWeight: 800, fontSize: 28, color: 'white', letterSpacing: -1 }}>HotelRes</span>
-          </div>
-          <nav style={{ display: 'flex', gap: 32 }}>
-            <a href="#" className="nav-btn" onClick={e => { e.preventDefault(); navigate('/'); }}>
-              {FaHome({ style: { marginRight: 8, fontSize: 20 } })} Home
-            </a>
-            <a
-              href="#"
-              className="nav-btn"
-              onClick={e => {
-                e.preventDefault();
-                const lastParams = localStorage.getItem('lastHotelSearchParams');
-                if (lastParams) {
-                  try {
-                    const parsed = JSON.parse(lastParams);
-                    navigate('/hotels', { state: { searchParams: parsed } });
-                  } catch {
-                    navigate('/');
-                  }
-                } else {
-                  navigate('/');
-                }
-              }}
-            >
-              {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
-            </a>
-            <a href="#" className="nav-btn">
-              {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-            </a>
-          </nav>
-        </div>
-      </header>
+      <Header
+        currency={currency}
+        currencyList={currencyList}
+        nationality={nationality}
+        nationalityList={nationalityList}
+        showSelectors={false}
+      />
       {/* Galeri grid - Düsseldorf tarzı */}
       <div style={{
         width: '100vw',

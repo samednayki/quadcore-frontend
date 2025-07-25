@@ -609,3 +609,14 @@ export async function getReservationDetail({ token, reservationNumber }: { token
   if (!text) return {};
   return JSON.parse(text);
 }
+
+export async function getNationality() {
+  const response = await fetch("http://localhost:8080/api/nationalities", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+  if (!response.ok) throw new Error("Nationality listesi alınamadı");
+  return response.json();
+}

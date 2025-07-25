@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './HotelList.css';
 import { FaHome, FaSearch, FaBookmark, FaBed, FaCalendarAlt, FaUserFriends } from 'react-icons/fa';
 import './SearchPage.css'; // SearchPage bar still uses this CSS
+import Header from '../components/Header';
+import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 interface Hotel {
   id: string;
@@ -114,6 +116,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   const [currentCheckOutMonth, setCurrentCheckOutMonth] = useState(new Date());
   const [showGuestRoomDropdown, setShowGuestRoomDropdown] = useState(false);
   const [loadingAutocomplete, setLoadingAutocomplete] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   // 1. Component başında şu sabitleri tekrar ekle:
   const MAX_ADULTS = 9;
@@ -126,13 +129,13 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
   const [pendingRoomId, setPendingRoomId] = useState<number | null>(null);
   const [pendingChildAges, setPendingChildAges] = useState<number[]>([]);
 
-  // Currency ve Nationality state'leri (header için)
-  const [currency, setCurrency] = useState('EUR');
-  const [nationality, setNationality] = useState('DE');
+  const {
+    currency, setCurrency, currencyList, setCurrencyList,
+    nationality, setNationality, nationalityList, setNationalityList
+  } = useCurrencyNationality();
 
-  // Dinamik currency ve nationality listeleri
-  const [currencyList, setCurrencyList] = useState<string[]>([]);
-  const [nationalityList, setNationalityList] = useState<string[]>([]);
+  const [currencyError, setCurrencyError] = useState('');
+  const [nationalityError, setNationalityError] = useState('');
 
   // Sıralama seçenekleri
   const sortOptions = [
@@ -174,7 +177,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       .then(res => res.json())
       .then(data => {
         if (data.body?.currencies) {
-          setCurrencyList(data.body.currencies.map((c: any) => c.code));
+          setCurrencyList(data.body.currencies);
         }
       });
     // Nationality fetch
@@ -187,7 +190,7 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
       .then(res => res.json())
       .then(data => {
         if (data.body?.nationalities) {
-          setNationalityList(data.body.nationalities.map((n: any) => n.id));
+          setNationalityList(data.body.nationalities);
         }
       });
   }, []);
@@ -280,6 +283,13 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
         try {
           const data = JSON.parse(responseText);
           console.log('PriceSearch Response:', data); // DEBUG
+          // Update context with backend values if present, fallback to searchParams
+          if (data.body) {
+            setCurrency(data.body.currency || searchParams.currency || '');
+            setNationality(data.body.nationality || searchParams.nationality || '');
+            if (data.body.currencies) setCurrencyList(data.body.currencies);
+            if (data.body.nationalities) setNationalityList(data.body.nationalities);
+          }
           if (data.body && data.body.hotels) {
             setHotels(data.body.hotels);
             let extractedSearchId = '';
@@ -330,23 +340,40 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedDestination && selectedCheckInDate && selectedCheckOutDate && rooms.length > 0) {
-      const newSearchParams = {
-        destination: selectedDestination.id,
-        destinationName: selectedDestination.name,
-        checkIn: selectedCheckInDate,
-        checkOut: selectedCheckOutDate,
-        guests: rooms.reduce((total, r) => total + r.adults, 0) + rooms.reduce((total, r) => total + r.children, 0),
-        rooms: rooms.length,
-        currency: searchParams?.currency || 'USD',
-        nationality: searchParams?.nationality || 'US',
-        roomDetails: rooms,
-      };
-      localStorage.setItem('lastHotelSearchParams', JSON.stringify(newSearchParams));
-      navigate('/hotels', { state: { searchParams: newSearchParams } });
-    } else {
-      alert('Please select destination, dates, and rooms.');
+    let hasError = false;
+    if (!selectedDestination || !selectedCheckInDate || !selectedCheckOutDate || rooms.length === 0) {
+      setCurrencyError('');
+      setNationalityError('');
+      setAlertMessage('Please select destination, dates, and rooms.');
+      setTimeout(() => setAlertMessage(''), 3000);
+      return;
     }
+    if (!currency) {
+      setCurrencyError('Please select currency.');
+      hasError = true;
+    } else {
+      setCurrencyError('');
+    }
+    if (!nationality) {
+      setNationalityError('Please select nationality.');
+      hasError = true;
+    } else {
+      setNationalityError('');
+    }
+    if (hasError) return;
+    const newSearchParams = {
+      destination: selectedDestination.id,
+      destinationName: selectedDestination.name,
+      checkIn: selectedCheckInDate,
+      checkOut: selectedCheckOutDate,
+      guests: rooms.reduce((total, r) => total + r.adults, 0) + rooms.reduce((total, r) => total + r.children, 0),
+      rooms: rooms.length,
+      currency,
+      nationality,
+      roomDetails: rooms,
+    };
+    localStorage.setItem('lastHotelSearchParams', JSON.stringify(newSearchParams));
+    navigate('/hotels', { state: { searchParams: newSearchParams } });
   };
 
   const fetchAutocomplete = async (query: string) => {
@@ -716,108 +743,23 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
     <div className="hotel-list-root" style={{
       minHeight: '100vh',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      // Remove any top margin or colored bar between header and content
+      background: 'none',
+      marginTop: 0,
+      paddingTop: 0
     }}>
       {/* HEADER */}
-      <header style={{
-        width: '100%',
-        background: '#0a2342', // Skyscanner tarzı çok koyu lacivert
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        padding: '90px 0 70px 0',
-        marginBottom: 32,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <img
-              src={process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg'}
-              alt="Logo"
-              style={{ height: 56, borderRadius: 12, marginRight: 20 }}
-            />
-            <span style={{ fontWeight: 800, fontSize: 34, color: 'white', letterSpacing: -1 }}>HotelRes</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            {/* Currency Select */}
-            <select
-              value={currency}
-              onChange={e => setCurrency(e.target.value)}
-              style={{
-                background: '#fff',
-                color: '#1e3a8a',
-                fontWeight: 700,
-                fontSize: 18,
-                border: '2px solid #e0e7ef',
-                borderRadius: 10,
-                padding: '8px 18px',
-                marginRight: 8,
-                minWidth: 90
-              }}
-            >
-              {currencyList.map(code => (
-                <option key={code} value={code}>{code}</option>
-              ))}
-            </select>
-            {/* Nationality Select */}
-            <select
-              value={nationality}
-              onChange={e => setNationality(e.target.value)}
-              style={{
-                background: '#fff',
-                color: '#1e3a8a',
-                fontWeight: 700,
-                fontSize: 18,
-                border: '2px solid #e0e7ef',
-                borderRadius: 10,
-                padding: '8px 18px',
-                minWidth: 90
-              }}
-            >
-              {nationalityList.map(code => (
-                <option key={code} value={code}>{code}</option>
-              ))}
-            </select>
-            {/* Nav */}
-            <nav style={{ display: 'flex', gap: 32 }}>
-              <a href="#" className="nav-btn">
-                {FaHome({ style: { marginRight: 8, fontSize: 20 } })} Home
-              </a>
-              <a
-                href="#"
-                className="nav-btn"
-                onClick={e => {
-                  e.preventDefault();
-                  const lastParams = localStorage.getItem('lastHotelSearchParams');
-                  if (lastParams) {
-                    try {
-                      const parsed = JSON.parse(lastParams);
-                      navigate('/hotels', { state: { searchParams: parsed } });
-                    } catch {
-                      navigate('/');
-                    }
-                  } else {
-                    navigate('/');
-                  }
-                }}
-              >
-                {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
-              </a>
-              <a href="#" className="nav-btn">
-                {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-              </a>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+      <Header
+        currency={currency}
+        onCurrencyChange={setCurrency}
+        currencyList={currencyList}
+        nationality={nationality}
+        onNationalityChange={setNationality}
+        nationalityList={nationalityList}
+        currencyError={currencyError}
+        nationalityError={nationalityError}
+      />
       {/* MAIN CONTENT */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
         {/* NİZAMİ, BİRLEŞİK, MODERN SEARCH BAR */}
@@ -1527,6 +1469,24 @@ const HotelList: React.FC<HotelListProps> = ({ searchParams: propSearchParams })
           </div>
         </div>
       </main>
+      {alertMessage && (
+        <div style={{
+          position: 'fixed',
+          top: 32,
+          right: 32,
+          background: 'linear-gradient(90deg, #f43f5e 0%, #2563eb 100%)',
+          color: 'white',
+          padding: '16px 32px',
+          borderRadius: 12,
+          fontWeight: 700,
+          fontSize: 18,
+          boxShadow: '0 4px 24px #2563eb22',
+          zIndex: 9999,
+          transition: 'opacity 0.3s'
+        }}>
+          {alertMessage}
+        </div>
+      )}
     </div>
   );
 }

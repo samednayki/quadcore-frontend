@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getReservationList } from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaHome, FaSearch, FaBookmark } from 'react-icons/fa';
+import Header from '../components/Header';
 
 const logoUrl = process.env.PUBLIC_URL + '/WhatsApp Image 2025-07-08 at 09.35.08_7abde45a.jpg';
 
@@ -10,6 +11,10 @@ const MyReservations: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [currency, setCurrency] = useState('EUR');
+  const [nationality, setNationality] = useState('DE');
+  const [currencyList, setCurrencyList] = useState<{ code: string; name: string }[]>([{ code: 'EUR', name: 'Euro' }]);
+  const [nationalityList, setNationalityList] = useState<{ id: string; name: string }[]>([{ id: 'DE', name: 'Germany' }]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -34,63 +39,14 @@ const MyReservations: React.FC = () => {
 
   return (
     <>
-      {/* HEADER (same as HotelDetailsPage) */}
-      <header style={{
-        width: '100%',
-        background: '#1e3a8a',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        padding: '24px 0 12px 0',
-        marginBottom: 0,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <img
-              src={logoUrl}
-              alt="Logo"
-              style={{ height: 48, borderRadius: 12, marginRight: 16 }}
-            />
-            <span style={{ fontWeight: 800, fontSize: 28, color: 'white', letterSpacing: -1 }}>HotelRes</span>
-          </div>
-          <nav style={{ display: 'flex', gap: 32 }}>
-            <Link to="/" className="nav-btn">
-              {FaHome({ style: { marginRight: 8, fontSize: 20 } })} Home
-            </Link>
-            <a
-              href="#"
-              className="nav-btn"
-              onClick={e => {
-                e.preventDefault();
-                const lastParams = localStorage.getItem('lastHotelSearchParams');
-                if (lastParams) {
-                  try {
-                    const parsed = JSON.parse(lastParams);
-                    navigate('/hotels', { state: { searchParams: parsed } });
-                  } catch {
-                    navigate('/');
-                  }
-                } else {
-                  navigate('/');
-                }
-              }}
-            >
-              {FaSearch({ style: { marginRight: 8, fontSize: 20 } })} Search Hotels
-            </a>
-            <Link to="/find-reservation" className="nav-btn">
-              {FaBookmark({ style: { marginRight: 8, fontSize: 20 } })} My Reservations
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header
+        currency={currency}
+        onCurrencyChange={setCurrency}
+        currencyList={currencyList}
+        nationality={nationality}
+        onNationalityChange={setNationality}
+        nationalityList={nationalityList}
+      />
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', padding: 32 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, color: '#1e3a8a', marginBottom: 32 }}>My Reservations</h1>
         {loading && <div style={{ fontSize: 20, color: '#2563eb' }}>Loading...</div>}

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { getReservationList, getReservationDetail } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Header from '../components/Header';
+import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 const FindReservationPage: React.FC = () => {
   const [reservationNumber, setReservationNumber] = useState('');
@@ -10,6 +12,8 @@ const FindReservationPage: React.FC = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [detail, setDetail] = useState<any>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currency, currencyList, nationality, nationalityList } = useCurrencyNationality();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +64,13 @@ const FindReservationPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', padding: 32 }}>
+      <Header
+        currency={currency}
+        currencyList={currencyList}
+        nationality={nationality}
+        nationalityList={nationalityList}
+        showSelectors={false}
+      />
       <h1 style={{ fontSize: 32, fontWeight: 900, color: '#1e3a8a', marginBottom: 32 }}>Find Your Reservation</h1>
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
         <input

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getReservationDetail } from '../api';
+import Header from '../components/Header';
+import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 const ReservationDetailPage: React.FC = () => {
   const { reservationNumber } = useParams<{ reservationNumber: string }>();
@@ -8,6 +10,8 @@ const ReservationDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currency, currencyList, nationality, nationalityList } = useCurrencyNationality();
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -44,27 +48,36 @@ const ReservationDetailPage: React.FC = () => {
   const travellers = detail.reservationData?.travellers || [];
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', padding: 32 }}>
-      <h1 style={{ fontSize: 32, fontWeight: 900, color: '#1e3a8a', marginBottom: 32 }}>Reservation Detail</h1>
-      <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px #2563eb11', padding: 32, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div style={{ fontWeight: 800, fontSize: 22, color: '#2563eb' }}>Reservation #{detail.reservationNumber}</div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Leader: <b>{travellers[0]?.name} {travellers[0]?.surname}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Country: <b>{info.country?.name || travellers[0]?.nationality?.name || '-'}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Dates: <b>{info.beginDate ? info.beginDate.slice(0,10) : '-'} - {info.endDate ? info.endDate.slice(0,10) : '-'}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Price: <b>{info.salePrice?.amount ? `${info.salePrice.amount} ${info.salePrice.currency}` : '-'}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Status: <b>{statusString(info.reservationStatus)}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Traveller Count: <b>{travellers.length || '-'}</b></div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>Documents:</div>
-        <ul>
-          {info.documents && info.documents.length > 0 ? (
-            info.documents.map((doc: any, idx: number) => (
-              <li key={idx}><a href={doc.url} target="_blank" rel="noopener noreferrer">{doc.name || doc.url}</a></li>
-            ))
-          ) : (
-            <li style={{ color: '#64748b' }}>No documents.</li>
-          )}
-        </ul>
-        <button onClick={() => navigate('/my-reservations')} style={{ marginTop: 12, background: 'linear-gradient(90deg, #2563eb 0%, #16a34a 100%)', color: 'white', fontWeight: 700, fontSize: 16, padding: '10px 28px', border: 'none', borderRadius: 10, cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', letterSpacing: 1 }}>Back to My Reservations</button>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', padding: '0 32px 32px 32px', display: 'flex', flexDirection: 'column' }}>
+      <Header
+        currency={currency}
+        currencyList={currencyList}
+        nationality={nationality}
+        nationalityList={nationalityList}
+        showSelectors={false}
+      />
+      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+        <h1 style={{ fontSize: 34, fontWeight: 900, color: '#1e3a8a', margin: '36px 0 36px 0', textAlign: 'center', letterSpacing: -1 }}>Reservation Detail</h1>
+        <div style={{ background: '#fff', borderRadius: 22, boxShadow: '0 8px 40px #2563eb11', padding: 44, maxWidth: 600, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22, alignItems: 'center', border: '2.5px solid #2563eb22' }}>
+          <div style={{ fontWeight: 900, fontSize: 26, color: '#2563eb', marginBottom: 8, letterSpacing: 0.5 }}>Reservation #{detail.reservationNumber}</div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Leader: <b>{travellers[0]?.name} {travellers[0]?.surname}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Country: <b>{info.country?.name || travellers[0]?.nationality?.name || '-'}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Dates: <b>{info.beginDate ? info.beginDate.slice(0,10) : '-'} - {info.endDate ? info.endDate.slice(0,10) : '-'}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Price: <b style={{ color: '#22c55e' }}>{info.salePrice?.amount ? `${info.salePrice.amount} ${info.salePrice.currency}` : '-'}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Status: <b style={{ color: '#2563eb' }}>{statusString(info.reservationStatus)}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Traveller Count: <b>{travellers.length || '-'}</b></div>
+          <div style={{ color: '#475569', fontSize: 18, marginBottom: 2 }}>Documents:</div>
+          <ul style={{ margin: 0, paddingLeft: 18, width: '100%' }}>
+            {info.documents && info.documents.length > 0 ? (
+              info.documents.map((doc: any, idx: number) => (
+                <li key={idx}><a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'underline' }}>{doc.name || doc.url}</a></li>
+              ))
+            ) : (
+              <li style={{ color: '#64748b' }}>No documents.</li>
+            )}
+          </ul>
+          <button onClick={() => navigate('/my-reservations')} style={{ marginTop: 18, background: 'linear-gradient(90deg, #2563eb 0%, #16a34a 100%)', color: 'white', fontWeight: 800, fontSize: 18, padding: '14px 0', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 2px 8px #2563eb22', letterSpacing: 1, width: '100%' }}>Back to My Reservations</button>
+        </div>
       </div>
     </div>
   );

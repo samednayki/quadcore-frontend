@@ -1760,3 +1760,12 @@ footer.footer .footer-section h3::after {
     font-size: 0.8rem;
   }
 } 
+
+.searchbar-divider {
+  width: 2px;
+  background: #232931;
+  height: 100%;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+} 

@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaCalendarAlt, FaUserFriends, FaBed, FaUser, FaChild, FaPlus, FaMinus, FaGlobe, FaMoneyBillWave, FaSearch, FaKey, FaUsers, FaHome, FaBookmark } from 'react-icons/fa';
 import './SearchPage.css';
+import Header from '../components/Header';
+import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 interface Room {
   id: number;
@@ -40,6 +42,8 @@ const SearchPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [currencyError, setCurrencyError] = useState('');
+  const [nationalityError, setNationalityError] = useState('');
   
   // Autocomplete states
   const [destinationQuery, setDestinationQuery] = useState('');
@@ -50,12 +54,12 @@ const SearchPage: React.FC = () => {
   // Currency and nationality dropdown states
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [showNationalityDropdown, setShowNationalityDropdown] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState('EUR'); // Euro default
-  const [selectedNationality, setSelectedNationality] = useState('DE'); // Germany default
+  const [currency, setCurrency] = useState('');
+  const [nationality, setNationality] = useState('');
 
   // Search states for currency and nationality
-  const [currencySearch, setCurrencySearch] = useState('EUR');
-  const [nationalitySearch, setNationalitySearch] = useState('DE');
+  const [currencySearch, setCurrencySearch] = useState('');
+  const [nationalitySearch, setNationalitySearch] = useState('');
 
   // Guest count states with limits
   const [adultCount, setAdultCount] = useState(1);
@@ -441,7 +445,7 @@ const SearchPage: React.FC = () => {
         if (data.body?.currencies) {
           const eurCurrency = data.body.currencies.find((c: any) => c.code === 'EUR');
           if (!eurCurrency && data.body.currencies.length > 0) {
-            setSelectedCurrency(data.body.currencies[0].code);
+            setCurrency(data.body.currencies[0].code);
           }
         }
       })
@@ -463,7 +467,7 @@ const SearchPage: React.FC = () => {
         if (data.body?.nationalities) {
           const deNationality = data.body.nationalities.find((n: any) => n.id === 'DE');
           if (!deNationality && data.body.nationalities.length > 0) {
-            setSelectedNationality(data.body.nationalities[0].id);
+            setNationality(data.body.nationalities[0].id);
           }
         }
       })
@@ -759,14 +763,20 @@ const SearchPage: React.FC = () => {
       return;
     }
 
-    if (!currencySearch || currencySearch.trim() === '') {
-      setSearchError('Please select a currency');
-      return;
+    let hasError = false;
+    if (!currency || currency.trim() === '') {
+      setCurrencyError('Please select currency.');
+      hasError = true;
+    } else {
+      setCurrencyError('');
     }
-    if (!nationalitySearch || nationalitySearch.trim() === '') {
-      setSearchError('Please select a nationality');
-      return;
+    if (!nationality || nationality.trim() === '') {
+      setNationalityError('Please select nationality.');
+      hasError = true;
+    } else {
+      setNationalityError('');
     }
+    if (hasError) return;
 
     // Prepare search parameters
     const searchParams = {
@@ -777,8 +787,8 @@ const SearchPage: React.FC = () => {
       checkOut: selectedCheckOutDate,
       guests: getTotalGuests(),
       rooms: rooms.length,
-      currency: currencySearch,
-      nationality: nationalitySearch, // nationalitySearch'e ülke kodu atanacak
+      currency,
+      nationality,
       roomDetails: rooms.map(room => ({
         adults: room.adults,
         children: room.children,
@@ -907,184 +917,16 @@ const SearchPage: React.FC = () => {
           color: '#232931'
         }}
       >
-        <header className="app-header">
-          <div className="logo-title">
-            <img src={logoUrl} alt="HotelRes Logo" className="app-logo" />
-            <span className="app-title">HotelRes</span>
-          </div>
-          <nav className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24, justifyContent: 'flex-end', width: '100%' }}>
-            {/* Currency & Nationality dropdowns önce gelsin */}
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginRight: 32 }}>
-              {/* Currency Dropdown */}
-              <div ref={currencyRef} style={{ position: 'relative', minWidth: 120 }}>
-                <input
-                  type="text"
-                  value={currencySearch}
-                  onChange={e => {
-                    setCurrencySearch(e.target.value);
-                    setShowCurrencyDropdown(true);
-                    setShowNationalityDropdown(false);
-                    setShowAutocomplete(false);
-                  }}
-                  onFocus={() => setShowCurrencyDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowCurrencyDropdown(false), 200)}
-                  placeholder="Currency"
-                  style={{
-                    border: '1.5px solid #bbdefb',
-                    borderRadius: '12px',
-                    padding: '0.5rem 1.2rem',
-                    background: '#fff',
-                    width: 100,
-                    fontWeight: 500,
-                    fontSize: '1rem',
-                    color: '#232931',
-                    marginRight: 8
-                  }}
-                />
-                <span style={{ marginLeft: 4, color: '#888', fontSize: 16, userSelect: 'none', cursor: 'pointer' }} onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}>▼</span>
-                {showCurrencyDropdown && createPortal(
-                  <div
-                    className="custom-select-dropdown"
-                    style={{
-                      position: 'absolute',
-                      top: currencyDropdownPos.top,
-                      left: currencyDropdownPos.left,
-                      width: currencyDropdownPos.width,
-                      zIndex: 9999,
-                      backgroundColor: 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                      maxHeight: '300px',
-                      overflow: 'auto',
-                      marginTop: 0
-                    }}
-                  >
-                    <div className="dropdown-items-container">
-                      {currencies
-                        .filter(currency =>
-                          currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
-                          currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
-                        )
-                        .map(currency => (
-                          <div
-                            key={currency.code}
-                            className="custom-select-item"
-                            onMouseDown={e => {
-                e.preventDefault();
-                              setSelectedCurrency(currency.code);
-                              setCurrencySearch(currency.name);
-                              setShowCurrencyDropdown(false);
-                            }}
-                          >
-                            <div className="select-item-icon">💵</div>
-                            <div className="select-item-content">
-                              <div className="select-item-title">{currency.name}</div>
-                              <div className="select-item-subtitle">{currency.code}</div>
-                            </div>
-                          </div>
-                        ))}
-                      {currencies.filter(currency =>
-                        currency.name.toLowerCase().includes((currencySearch || '').toLowerCase()) ||
-                        currency.code.toLowerCase().includes((currencySearch || '').toLowerCase())
-                      ).length === 0 && (
-                        <div className="dropdown-no-results">
-                          <div className="no-results-icon">🔍</div>
-                          <div className="no-results-text">No currencies found</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>,
-                  document.body
-                )}
-              </div>
-              {/* Nationality Dropdown */}
-              <div ref={nationalityRef} style={{ position: 'relative', minWidth: 120 }}>
-                <input
-                  type="text"
-                  value={nationalitySearch}
-                  onChange={e => {
-                    setNationalitySearch(e.target.value.toUpperCase());
-                    setShowNationalityDropdown(true);
-                    setShowCurrencyDropdown(false);
-                    setShowAutocomplete(false);
-                  }}
-                  onFocus={() => setShowNationalityDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowNationalityDropdown(false), 200)}
-                  placeholder="Nationality Code"
-                  style={{
-                    border: '1.5px solid #bbdefb',
-                    borderRadius: '12px',
-                    padding: '0.5rem 1.2rem',
-                    background: '#fff',
-                    width: 100,
-                    fontWeight: 500,
-                    fontSize: '1rem',
-                    color: '#232931',
-                  }}
-                />
-                <span style={{ marginLeft: 4, color: '#888', fontSize: 16, userSelect: 'none', cursor: 'pointer' }} onClick={() => setShowNationalityDropdown(!showNationalityDropdown)}>▼</span>
-                {showNationalityDropdown && createPortal(
-                  <div
-                    className="custom-select-dropdown"
-          style={{
-                      position: 'absolute',
-                      top: nationalityDropdownPos.top,
-                      left: nationalityDropdownPos.left,
-                      width: nationalityDropdownPos.width,
-                      zIndex: 9999,
-                      backgroundColor: 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-                      maxHeight: '300px',
-                      overflow: 'auto',
-                      marginTop: 0
-                    }}
-                  >
-                    <div className="dropdown-items-container">
-                      {nationalities
-                        .filter(nationality =>
-                          nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
-                          nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
-                        )
-                        .map(nationality => (
-                          <div
-                            key={nationality.id}
-                            className="custom-select-item"
-                            onMouseDown={e => {
-                              e.preventDefault();
-                              setSelectedNationality(nationality.id);
-                              setNationalitySearch(nationality.id); // KODU ata
-                              setShowNationalityDropdown(false);
-                            }}
-                          >
-                            <div className="select-item-icon">{getCountryFlag(nationality.id)}</div>
-                            <div className="select-item-content">
-                              <div className="select-item-title">{nationality.name}</div>
-                </div>
-              </div>
-                        ))}
-                      {nationalities.filter(nationality =>
-                        nationality.name.toLowerCase().includes((nationalitySearch || '').toLowerCase()) ||
-                        nationality.id.toLowerCase().includes((nationalitySearch || '').toLowerCase())
-                      ).length === 0 && (
-                        <div className="dropdown-no-results">
-                          <div className="no-results-icon">🔍</div>
-                          <div className="no-results-text">No nationalities found</div>
-            </div>
-                      )}
-                  </div>
-                  </div>,
-                  document.body
-                )}
-              </div>
-            </div>
-            {/* Nav linkler sağda */}
-            <a href="#" className="nav-link nav-box">{FaHome({ className: "nav-icon" })}<span className="nav-text">Home</span></a>
-            <a href="#" className="nav-link nav-box">{FaBookmark({ className: "nav-icon" })}<span className="nav-text">My Reservations</span></a>
-          </nav>
-        </header>
+        <Header
+          currency={currency}
+          onCurrencyChange={setCurrency}
+          currencyList={currencies}
+          nationality={nationality}
+          onNationalityChange={setNationality}
+          nationalityList={nationalities}
+          currencyError={currencyError}
+          nationalityError={nationalityError}
+        />
         <div
           style={{ position: 'relative', zIndex: 1, minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
@@ -1483,7 +1325,7 @@ const SearchPage: React.FC = () => {
                             </div>
                 {/* Search butonunu en sağa ekle */}
                 <button
-                  type="button"
+                  type="submit"
                   className="search-btn-v2"
                   style={{
                     height: 100,
@@ -1503,14 +1345,7 @@ const SearchPage: React.FC = () => {
                     marginTop: 0,
                     marginLeft: 0,
                   }}
-                  onClick={(e) => {
-                    // Form submitini tetikle
-                    const form = document.querySelector('form');
-                    if (form) {
-                      const event = new Event('submit', { bubbles: true, cancelable: true });
-                      form.dispatchEvent(event);
-                    }
-                  }}
+                  disabled={!currency || !nationality || loading}
                 >
                   <span style={{ fontSize: 24, marginRight: 10, display: 'flex', alignItems: 'center' }}>🔍</span>
                   Search

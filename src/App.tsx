@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { CurrencyNationalityProvider } from './context/CurrencyNationalityContext';
 import SearchPage from './pages/SearchPage';
 import HotelList from './pages/HotelList';
 import HotelDetailsPage from './pages/HotelDetailsPage';
@@ -12,6 +13,7 @@ import ReservationDetailPage from './pages/ReservationDetailPage';
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <CurrencyNationalityProvider>
       <Router>
         <Routes>
           <Route path="/" element={<SearchPage />} />
@@ -23,6 +25,7 @@ const App: React.FC = () => {
           <Route path="/reservation-detail/:reservationNumber" element={<ReservationDetailPage />} />
         </Routes>
       </Router>
+      </CurrencyNationalityProvider>
     </AuthProvider>
   );
 };
