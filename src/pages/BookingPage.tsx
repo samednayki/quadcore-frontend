@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import { useCurrencyNationality } from '../context/CurrencyNationalityContext';
 
 const BookingPage: React.FC = () => {
-  const { currency, currencyList, nationality, nationalityList } = useCurrencyNationality();
+  const { currency, setCurrency, currencyList, setCurrencyList, nationality, setNationality, nationalityList, setNationalityList } = useCurrencyNationality();
   const location = useLocation();
   const navigate = useNavigate();
   const { transactionData, hotelData, offerData, selectedNationality } = location.state || {};
@@ -124,7 +124,15 @@ const BookingPage: React.FC = () => {
       baseTravellers = [...baseTravellers, ...emptyTravellers];
     }
     setTravellers(baseTravellers);
-    // SearchPage'deki gibi nationalities fetch
+    // Currency list fetch
+    fetch('http://localhost:8080/api/currency', {
+      method: 'GET',
+    })
+      .then(res => res.json())
+      .then(data => {
+        setCurrencyList((data.body?.currencies || []).map((c: any) => ({ code: c.code, name: c.name })));
+      });
+    // Nationality list fetch
     const token = localStorage.getItem('authToken');
     if (!token) return;
     fetch('http://localhost:8080/api/nationalities', {
@@ -135,17 +143,28 @@ const BookingPage: React.FC = () => {
     })
       .then(res => res.json())
       .then(data => {
-        // Nationalities array'ini ülke kodu (code) ile map et
-        setNationalities((data.body?.nationalities || []).map((n: any) => ({
-          id: n.code || n.id,
-          name: n.name
-        })));
+        setNationalities((data.body?.nationalities || []).map((n: any) => ({ id: n.code || n.id, name: n.name })));
+        setNationalityList((data.body?.nationalities || []).map((n: any) => ({ id: n.code || n.id, name: n.name })));
         // SearchPage'den gelen nationality varsa, ilk traveller'a ata
         if (selectedNationality && data.body?.nationalities?.length > 0) {
           setTravellers((prev) => prev.map((trav, i) => i === 0 ? { ...trav, nationality: selectedNationality } : trav));
         }
       });
-  }, [transactionData, hotelData, offerData, selectedNationality, guestCount]);
+  }, [transactionData, hotelData, offerData, selectedNationality, guestCount, setCurrencyList, setNationalityList]);
+
+  // Context'teki currency veya nationality boşsa localStorage'dan yükle
+  React.useEffect(() => {
+    if (!currency || !nationality) {
+      const lastParams = localStorage.getItem('lastHotelSearchParams');
+      if (lastParams) {
+        try {
+          const parsed = JSON.parse(lastParams);
+          if (!currency && parsed.currency) setCurrency(parsed.currency);
+          if (!nationality && parsed.nationality) setNationality(parsed.nationality);
+        } catch {}
+      }
+    }
+  }, [currency, nationality, setCurrency, setNationality]);
 
   const validateTravellers = (travellersToCheck = travellers) => {
     const newErrors = travellersToCheck.map((traveller, index) => {
@@ -562,7 +581,8 @@ const BookingPage: React.FC = () => {
         currencyList={currencyList}
         nationality={nationality}
         nationalityList={nationalityList}
-        showSelectors={false}
+        showSelectors={true}
+        editableSelectors={false}
       />
         <div style={{
           maxWidth: 1400,
@@ -658,7 +678,7 @@ const BookingPage: React.FC = () => {
                         <label style={{ fontWeight: 600, fontSize: 14 }}>Nationality *</label>
                         <input
                           list={`nationality-list-${index}`}
-                          value={traveller.nationality || ''}
+                          value={typeof traveller.nationality === 'string' ? traveller.nationality : (traveller.nationality?.twoLetterCode || '')}
                           onChange={e => handleTravellerChange(index, 'nationality', e.target.value.toUpperCase())}
                           onBlur={() => handleTravellerBlur(index, 'nationality')}
                           style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', textTransform: 'uppercase' }}
@@ -698,7 +718,7 @@ const BookingPage: React.FC = () => {
                         <label style={{ fontWeight: 600, fontSize: 14 }}>Country Name *</label>
                   <input
                     type="text"
-                          value={selectedNat?.name || ''}
+                          value={selectedNat?.name || (typeof traveller.nationality === 'string' ? traveller.nationality : traveller.nationality?.twoLetterCode || '')}
                           readOnly
                           style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', background: '#f3f4f6' }}
                           placeholder="Country name"
@@ -708,7 +728,7 @@ const BookingPage: React.FC = () => {
                         <label style={{ fontWeight: 600, fontSize: 14 }}>Country ID *</label>
                     <input
                           type="text"
-                          value={traveller.nationality || ''}
+                          value={typeof traveller.nationality === 'string' ? traveller.nationality : (traveller.nationality?.twoLetterCode || '')}
                           readOnly
                           style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', background: '#f3f4f6' }}
                           placeholder="e.g. TR, US, GB, etc."

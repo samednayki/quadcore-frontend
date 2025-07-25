@@ -1496,9 +1496,11 @@ const currentYear = new Date().getFullYear();
 
 export default function HotelListWithFooter(props: HotelListProps) {
   return (
-    <>
-      <HotelList {...props} />
-      <footer className="footer" style={{ marginTop: '24px', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, #0a2342 0%, #2563eb 100%)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <HotelList {...props} />
+      </div>
+      <footer className="footer" style={{ marginTop: '0', backgroundColor: '#1a1a2e', color: '#e0e0e0', padding: '24px 0 8px 0', fontFamily: `'Inter', 'Roboto', 'Arial', sans-serif`, fontWeight: 400, fontSize: '1rem', border: 'none', boxShadow: 'none', width: '100%' }}>
         <div className="footer-content" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
           <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <p style={{ fontSize: '1.08rem', fontWeight: 400, color: '#e0e0e0', marginBottom: '1.1rem', lineHeight: 1.5, textAlign: 'left' }}>
@@ -1547,7 +1549,7 @@ export default function HotelListWithFooter(props: HotelListProps) {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 

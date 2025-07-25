@@ -54,8 +54,8 @@ const SearchPage: React.FC = () => {
   // Currency and nationality dropdown states
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [showNationalityDropdown, setShowNationalityDropdown] = useState(false);
-  const [currency, setCurrency] = useState('');
-  const [nationality, setNationality] = useState('');
+  const [currency, setCurrency] = useState('EUR');
+  const [nationality, setNationality] = useState('DE');
 
   // Search states for currency and nationality
   const [currencySearch, setCurrencySearch] = useState('');
@@ -1061,7 +1061,7 @@ const SearchPage: React.FC = () => {
                       )}
                     </div>
                 {/* Check-in */}
-                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: 80, borderRight: '2px solid #232931', padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
+                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: '100%', borderRight: '2px solid #232931', padding: '0 40px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 22, fontSize: 22, color: '#2563eb', zIndex: 2 }}>🗓️</span>
                           <input 
                     ref={checkInRef}
@@ -1087,8 +1087,8 @@ const SearchPage: React.FC = () => {
                       alignItems: 'center',
                     }}
                   />
-                  {showCheckInCalendar && createPortal(
-                    <div ref={checkInCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkInCalendarPos.top, left: checkInCalendarPos.left, width: checkInCalendarPos.width, background: '#fff' }}>
+                  {showCheckInCalendar && (
+                    <div ref={checkInCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'absolute', top: '100%', left: 0, width: '100%', background: '#fff' }}>
                             <div className="calendar-header">
                               <button 
                                 type="button" 
@@ -1156,12 +1156,11 @@ const SearchPage: React.FC = () => {
                                 Today
                               </button>
                             </div>
-                      </div>,
-                      document.body
+                      </div>
                     )}
                     </div>
                 {/* Check-out */}
-                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: 80, borderRight: '2px solid #232931', padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
+                <div style={{ flex: 1.2, minWidth: 220, display: 'flex', alignItems: 'center', height: '100%', borderRight: '2px solid #232931', padding: '0 40px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 22, fontSize: 22, color: '#2563eb', zIndex: 2 }}>🗓️</span>
                           <input
                     ref={checkOutRef}
@@ -1187,8 +1186,8 @@ const SearchPage: React.FC = () => {
                       alignItems: 'center',
                     }}
                   />
-                  {showCheckOutCalendar && createPortal(
-                    <div ref={checkOutCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'fixed', top: checkOutCalendarPos.top, left: checkOutCalendarPos.left, width: checkOutCalendarPos.width, background: '#fff' }}>
+                  {showCheckOutCalendar && (
+                    <div ref={checkOutCalendarRef} className="calendar-widget" style={{ zIndex: 99999, overflow: 'visible', position: 'absolute', top: '100%', left: 0, width: '100%', background: '#fff' }}>
                             <div className="calendar-header">
                               <button
                                 type="button"
@@ -1253,9 +1252,8 @@ const SearchPage: React.FC = () => {
                                 Today
                               </button>
                             </div>
-                      </div>,
-                      document.body
-                        )}
+                      </div>
+                    )}
                       </div>
                 {/* Guests & Rooms */}
                 <div style={{ flex: 1.1, minWidth: 320, display: 'flex', alignItems: 'center', height: 100, padding: '0 32px', background: 'none', boxSizing: 'border-box', position: 'relative' }}>

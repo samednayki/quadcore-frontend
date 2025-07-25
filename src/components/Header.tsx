@@ -11,6 +11,7 @@ interface HeaderProps {
   showSelectors?: boolean;
   currencyError?: string;
   nationalityError?: string;
+  editableSelectors?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -21,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({
   onNationalityChange,
   nationalityList,
   showSelectors = true,
+  editableSelectors = true,
   currencyError,
   nationalityError
 }) => {
@@ -86,10 +88,11 @@ const Header: React.FC<HeaderProps> = ({
                   ref={currencyRef}
                   type="text"
                   value={currency}
-                  onChange={e => onCurrencyChange && onCurrencyChange(e.target.value.toUpperCase())}
-                  onFocus={() => setCurrencyDropdown(true)}
-                  onBlur={handleCurrencyBlur}
+                  onChange={e => editableSelectors && onCurrencyChange && onCurrencyChange(e.target.value.toUpperCase())}
+                  onFocus={editableSelectors ? () => setCurrencyDropdown(true) : undefined}
+                  onBlur={editableSelectors ? handleCurrencyBlur : undefined}
                   placeholder="Currency"
+                  readOnly={!editableSelectors}
                   style={{
                     background: '#fff',
                     color: '#1e3a8a',
@@ -102,7 +105,9 @@ const Header: React.FC<HeaderProps> = ({
                     outline: 'none',
                     boxSizing: 'border-box',
                     textAlign: 'center',
-                    letterSpacing: 1
+                    letterSpacing: 1,
+                    pointerEvents: editableSelectors ? 'auto' : 'none',
+                    cursor: editableSelectors ? 'text' : 'not-allowed',
                   }}
                 />
                 {currencyError && (
@@ -174,10 +179,11 @@ const Header: React.FC<HeaderProps> = ({
                   ref={nationalityRef}
                   type="text"
                   value={nationality}
-                  onChange={e => onNationalityChange && onNationalityChange(e.target.value.toUpperCase())}
-                  onFocus={() => setNationalityDropdown(true)}
-                  onBlur={handleNationalityBlur}
+                  onChange={e => editableSelectors && onNationalityChange && onNationalityChange(e.target.value.toUpperCase())}
+                  onFocus={editableSelectors ? () => setNationalityDropdown(true) : undefined}
+                  onBlur={editableSelectors ? handleNationalityBlur : undefined}
                   placeholder="Nationality"
+                  readOnly={!editableSelectors}
                   style={{
                     background: '#fff',
                     color: '#1e3a8a',
@@ -190,7 +196,9 @@ const Header: React.FC<HeaderProps> = ({
                     outline: 'none',
                     boxSizing: 'border-box',
                     textAlign: 'center',
-                    letterSpacing: 1
+                    letterSpacing: 1,
+                    pointerEvents: editableSelectors ? 'auto' : 'none',
+                    cursor: editableSelectors ? 'text' : 'not-allowed',
                   }}
                 />
                 {nationalityError && (

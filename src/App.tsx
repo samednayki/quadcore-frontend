@@ -9,6 +9,7 @@ import BookingPage from './pages/BookingPage';
 import BookingSuccessPage from './pages/BookingSuccessPage';
 import MyReservations from './pages/MyReservations';
 import ReservationDetailPage from './pages/ReservationDetailPage';
+import FindReservationPage from './pages/FindReservationPage';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
           <Route path="/booking-success" element={<BookingSuccessPage />} />
           <Route path="/my-reservations" element={<MyReservations />} />
           <Route path="/reservation-detail/:reservationNumber" element={<ReservationDetailPage />} />
+          <Route path="/find-reservation" element={<FindReservationPage />} />
         </Routes>
       </Router>
       </CurrencyNationalityProvider>
